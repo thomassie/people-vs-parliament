@@ -1,0 +1,18 @@
+[
+	{"decade":1870,"proposals":9,"pct_against_nr":55.6,"mean_abs_gap_pts":23.9,"initiatives_accepted_pct":null},
+	{"decade":1880,"proposals":10,"pct_against_nr":60.0,"mean_abs_gap_pts":30.8,"initiatives_accepted_pct":null},
+	{"decade":1890,"proposals":21,"pct_against_nr":47.6,"mean_abs_gap_pts":30.2,"initiatives_accepted_pct":33.3},
+	{"decade":1900,"proposals":10,"pct_against_nr":30.0,"mean_abs_gap_pts":28.6,"initiatives_accepted_pct":25.0},
+	{"decade":1910,"proposals":11,"pct_against_nr":9.1,"mean_abs_gap_pts":26.0,"initiatives_accepted_pct":33.3},
+	{"decade":1920,"proposals":26,"pct_against_nr":30.8,"mean_abs_gap_pts":26.5,"initiatives_accepted_pct":30.0},
+	{"decade":1930,"proposals":17,"pct_against_nr":35.3,"mean_abs_gap_pts":30.3,"initiatives_accepted_pct":0.0},
+	{"decade":1940,"proposals":14,"pct_against_nr":35.7,"mean_abs_gap_pts":39.3,"initiatives_accepted_pct":20.0},
+	{"decade":1950,"proposals":41,"pct_against_nr":39.0,"mean_abs_gap_pts":31.4,"initiatives_accepted_pct":0.0},
+	{"decade":1960,"proposals":26,"pct_against_nr":19.2,"mean_abs_gap_pts":28.3,"initiatives_accepted_pct":0.0},
+	{"decade":1970,"proposals":78,"pct_against_nr":16.7,"mean_abs_gap_pts":26.1,"initiatives_accepted_pct":0.0},
+	{"decade":1980,"proposals":55,"pct_against_nr":18.2,"mean_abs_gap_pts":22.9,"initiatives_accepted_pct":8.3},
+	{"decade":1990,"proposals":97,"pct_against_nr":18.6,"mean_abs_gap_pts":17.3,"initiatives_accepted_pct":10.3},
+	{"decade":2000,"proposals":85,"pct_against_nr":12.9,"mean_abs_gap_pts":14.1,"initiatives_accepted_pct":11.4},
+	{"decade":2010,"proposals":73,"pct_against_nr":16.4,"mean_abs_gap_pts":11.4,"initiatives_accepted_pct":9.3},
+	{"decade":2020,"proposals":61,"pct_against_nr":26.2,"mean_abs_gap_pts":13.7,"initiatives_accepted_pct":14.3}
+]

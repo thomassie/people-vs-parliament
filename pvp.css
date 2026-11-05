@@ -1,0 +1,314 @@
+/* People vs Parliament: styles, all scoped under .pvp so they cannot touch the host page.
+   Colours come from the host's tokens (--paper, --ink, --muted, --rule, --red, --blue, --yellow,
+   --link), so the page follows the host's light and dark themes; theme.css defines them for the
+   standalone page. Layout reacts to the width of its own container, not the screen. */
+.pvp { container: pvp / inline-size; position: relative; color: var(--ink); }
+/* Embedded (default): the host page provides width and side gutters. */
+.pvp:not(.pvp--standalone) .wrap { max-width: none; margin-inline: 0; padding-left: 0; padding-right: 0; }
+.pvp:not(.pvp--standalone) .masthead { padding-top: 0; }
+/* Shield from the host's global element styles (zero-specificity :where, so every rule below still wins). */
+.pvp :where(h1, h2, h3, h4, p, ul, ol, li, dl, dt, dd, figure, blockquote, table, th, td, summary, label, select, button, span, b, em, small) {
+  color: inherit; font-family: inherit; letter-spacing: normal; text-transform: none; text-shadow: none; }
+.pvp :where(a) { color: var(--link); text-decoration: underline; text-decoration-style: solid; }
+
+/* Layout: soft Bauhaus. An asymmetric two-column grid: a narrow rail carries each section's
+   heading and explanation, a wide field carries the chart. One column under 760px.
+   Colours come only from theme.css tokens. Type follows the main website: Helvetica/Arial for
+   headings, reading text and italic quotations; Google Sans Code for navigation and supporting
+   information (labels, axes, notes, figures in tables). */
+.pvp {
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-support: "Google Sans Code", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --on-yellow: #2D3238;          /* text on the yellow fill, same in both themes */
+  --radius: 14px;
+  --gap: clamp(1.5rem, 4vw, 3rem);
+  --step--1: 0.8125rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3125rem;
+  --step-2: clamp(1.5rem, 3vw, 1.875rem);
+  --step-3: clamp(2.5rem, 7vw, 4.5rem);
+  --hero: clamp(4rem, 14vw, 8.5rem);
+  --max: 1160px;
+}
+.pvp *, .pvp *::before, .pvp *::after { box-sizing: border-box; }
+.pvp [hidden] { display: none !important; }
+.pvp {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.pvp .wrap {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.pvp h1, .pvp h2, .pvp h3 { font-family: var(--font-display); font-weight: 500; line-height: 1.1; margin: 0; text-wrap: balance; }
+.pvp p { margin: 0; }
+.pvp a { text-underline-offset: 0.18em; }
+.pvp em, .pvp q, .pvp blockquote { font-family: var(--font-body); font-style: italic; }
+.pvp blockquote { margin: 0; padding-left: 1.25rem; border-left: 3px solid var(--yellow); font-size: var(--step-1); line-height: 1.45; }
+.pvp .eyebrow {
+  font-family: var(--font-support);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* Title full stop: a drawn circle (Helvetica's full stop is square). Sits on the baseline. */
+/* An inline graphic, not an empty box: every engine puts its bottom edge on the text baseline. */
+.pvp .title-dot { display: inline-block; width: 0.15em; height: 0.15em; margin: 0 0 0 0.06em; padding: 0; vertical-align: baseline; overflow: visible; }
+.pvp .title-dot circle { fill: var(--red); }
+/* ---------- Masthead ---------- */
+.pvp .masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gap);
+  align-items: end;
+  padding-block: clamp(2.5rem, 7vw, 5rem) 0;
+}
+.pvp .masthead__text { display: grid; gap: 1.25rem; max-width: 46rem; min-width: 0; }
+.pvp .masthead h1 { font-size: var(--step-3); letter-spacing: -0.02em; }
+.pvp .lede { font-size: var(--step-1); line-height: 1.45; max-width: 38rem; }
+/* Bauhaus mark: people (circle), parliament (square), the vote (half circle). */
+.pvp .mark { position: relative; width: 168px; height: 168px; flex: none; }
+.pvp .mark span { position: absolute; display: block; }
+.pvp .mark__square { left: 0; bottom: 0; width: 104px; height: 104px; background: var(--blue); border-radius: 10px; }
+.pvp .mark__circle { right: 0; top: 0; width: 104px; height: 104px; background: var(--red); border-radius: 50%; }
+.pvp .mark__half { right: 8px; bottom: 0; width: 72px; height: 36px; background: var(--yellow); border-radius: 72px 72px 0 0; }
+/* ---------- Hero figure ---------- */
+.pvp .hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 clamp(1rem, 3vw, 2.5rem);
+  align-items: center;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+  border-bottom: 1px solid var(--rule);
+}
+.pvp .hero__figure {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--hero);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+.pvp .hero__figure small { font-size: 0.45em; letter-spacing: 0; margin-left: 0.04em; }
+.pvp .hero__text { font-size: var(--step-1); line-height: 1.45; max-width: 30rem; }
+/* ---------- Sections ---------- */
+.pvp .block {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--gap);
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+  border-bottom: 1px solid var(--rule);
+}
+.pvp .block__rail { display: grid; gap: 0.875rem; align-content: start; min-width: 0; }
+.pvp .block__rail h2 { font-size: var(--step-2); }
+.pvp .block__rail p { color: var(--muted); max-width: 26rem; }
+.pvp .block__body { display: grid; gap: 1.25rem; min-width: 0; align-content: start; }
+.pvp .note { font-family: var(--font-support); font-size: var(--step--1); color: var(--muted); }
+/* ---------- Charts ---------- */
+.pvp .chart { position: relative; width: 100%; min-width: 0; }
+.pvp .chart svg { display: block; overflow: visible; }
+.pvp .chart text { font-family: var(--font-support); font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.pvp .chart .grid line { stroke: var(--rule); stroke-width: 1; shape-rendering: crispEdges; }
+.pvp .chart .grid line.mid { stroke: var(--muted); stroke-opacity: 0.55; }
+.pvp .chart .diag { stroke: var(--rule); stroke-width: 1; }
+.pvp .chart .quad { fill: var(--red); fill-opacity: 0.07; }
+.pvp .chart .quad-label { font-family: var(--font-support); font-size: 11.5px; fill: var(--muted); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+.pvp .chart .axis-title { font-family: var(--font-support); font-size: 12px; fill: var(--ink); }
+.pvp .chart .bar { fill: var(--red); }
+.pvp .chart .value { fill: var(--ink); font-weight: 500; }
+.pvp .chart .hit { fill: transparent; cursor: default; }
+.pvp .chart .hit:focus { outline: none; }
+.pvp .chart .hit:focus-visible { fill: var(--rule); fill-opacity: 0.5; }
+.pvp .dot { stroke: var(--paper); stroke-width: 1.5px; }
+.pvp .dot--with { fill: var(--blue); }
+.pvp .dot--against { fill: var(--red); }
+.pvp .focus-ring { fill: none; stroke: var(--ink); stroke-width: 2px; pointer-events: none; }
+.pvp .overlay { fill: transparent; }
+.pvp .overlay:focus { outline: none; }
+.pvp .overlay:focus-visible { stroke: var(--link); stroke-width: 2px; }
+.pvp .tooltip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  width: max-content;
+  max-width: min(18rem, calc(100% - 8px));
+  padding: 0.75rem 0.875rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.pvp .tooltip[hidden] { display: none; }
+.pvp .tt__meta { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
+.pvp .tt__title { font-weight: 500; margin: 0.2rem 0 0.5rem; }
+.pvp .tt__rows { display: grid; gap: 0.2rem; margin: 0; }
+.pvp .tt__rows div { display: flex; justify-content: space-between; gap: 1rem; }
+.pvp .tt__rows dt { font-family: var(--font-support); font-size: 0.8125rem; display: flex; align-items: center; gap: 0.45rem; color: var(--muted); }
+.pvp .tt__rows dd { margin: 0; font-family: var(--font-support); font-variant-numeric: tabular-nums; }
+.pvp .tt__out { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--rule); }
+/* Shape keys: square = National Council, circle = the people */
+.pvp .key { display: inline-block; width: 10px; height: 10px; flex: none; }
+.pvp .key--square { background: var(--ink); border-radius: 2px; }
+.pvp .key--circle { border-radius: 50%; background: var(--blue); }
+.pvp .key--circle.against { background: var(--red); }
+/* ---------- Filters & legend ---------- */
+.pvp .filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; }
+.pvp .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--rule); }
+.pvp .seg button {
+  font: inherit;
+  font-family: var(--font-support);
+  font-size: 0.875rem;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  cursor: pointer;
+}
+.pvp .seg button:hover { background: var(--paper); }
+.pvp .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.pvp .seg button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.pvp .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-family: var(--font-support); font-size: 0.875rem; }
+.pvp .legend span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.pvp .legend .count { font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); }
+.pvp .summary { font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); }
+.pvp .summary strong { color: var(--ink); font-weight: 500; }
+/* ---------- Table view ---------- */
+.pvp .tableview summary { font-family: var(--font-support); font-size: 0.9375rem; cursor: pointer; color: var(--link); width: max-content; max-width: 100%; }
+.pvp .tableview summary:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 4px; }
+.pvp .tablewrap { overflow-x: auto; max-height: 28rem; overflow-y: auto; margin-top: 0.75rem; border: 1px solid var(--rule); border-radius: 10px; }
+.pvp table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+.pvp th, .pvp td { text-align: left; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.pvp th { position: sticky; top: 0; background: var(--paper); font-family: var(--font-support); font-size: 0.8125rem; font-weight: 500; white-space: nowrap; }
+.pvp td.num, .pvp th.num { text-align: right; font-family: var(--font-support); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pvp td.date { font-family: var(--font-support); white-space: nowrap; }
+/* ---------- Biggest splits ---------- */
+.pvp .splits { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; }
+.pvp .split { display: grid; gap: 0.35rem; }
+.pvp .split__meta { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
+.pvp .split__title { font-weight: 500; }
+/* ---------- Upcoming ---------- */
+.pvp .upcoming { display: grid; gap: 1.5rem; }
+.pvp .day { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.pvp .day__date {
+  width: 84px; height: 84px; border-radius: 50%;
+  display: grid; place-content: center; text-align: center;
+  background: var(--yellow); color: var(--on-yellow);
+  font-family: var(--font-display); line-height: 1.05;
+}
+.pvp .day__date b { display: block; font-size: 1.75rem; font-weight: 500; }
+.pvp .day__date span { font-size: 0.8125rem; }
+.pvp .day__items { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; min-width: 0; }
+.pvp .day__items li { display: grid; gap: 0.2rem; }
+.pvp .day__items .form { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
+.pvp .day__items .nr { font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.45rem; }
+.pvp .day__items .nr b { font-family: var(--font-support); font-weight: 500; color: var(--ink); }
+/* ---------- Vote day ---------- */
+.pvp .vd__status { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.pvp .pill {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: var(--font-support); font-size: 0.8125rem; line-height: 1;
+  padding: 0.4rem 0.7rem; border-radius: 999px;
+  border: 1px solid var(--rule); color: var(--ink); background: var(--paper);
+}
+.pvp .pill--live { background: var(--yellow); color: var(--on-yellow); border-color: var(--yellow); }
+.pvp .pill--live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--on-yellow); }
+@media (prefers-reduced-motion: no-preference) {
+  .pvp .pill--live::before { animation: pvp-pulse 1.6s ease-in-out infinite; }
+  @keyframes pvp-pulse { 50% { opacity: 0.25; } }
+}
+.pvp .vd__updated { font-family: var(--font-support); font-size: var(--step--1); color: var(--muted); }
+.pvp .progress { flex-basis: 100%; height: 4px; border-radius: 4px; background: var(--rule); overflow: hidden; max-width: 26rem; }
+.pvp .progress span { display: block; height: 100%; background: var(--ink); border-radius: 4px; }
+.pvp .vd__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem; }
+.pvp .vd__item { display: grid; gap: 0.45rem; }
+.pvp .vd__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; }
+.pvp .vd__meta { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
+.pvp .vd__title { font-weight: 500; font-size: var(--step-0); }
+.pvp .vd__vals { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); }
+.pvp .vd__vals span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.pvp .vd__vals b { font-weight: 500; color: var(--ink); }
+.pvp .vd__legend { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); }
+.pvp .vd__legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+/* ---------- Proposal plot: National Council (square), people (circle), cantons (dots) ---------- */
+.pvp .dumbbell { width: 100%; min-width: 0; }
+.pvp .dumbbell svg { display: block; overflow: visible; }
+.pvp .db-axis { stroke: var(--rule); stroke-width: 2px; stroke-linecap: round; }
+.pvp .db-half { stroke: var(--muted); stroke-width: 1px; }
+.pvp .db-link { stroke: var(--muted); stroke-width: 2px; }
+.pvp .db-sq { fill: var(--ink); }
+.pvp .db-ci { stroke: var(--paper); stroke-width: 2px; }
+.pvp .db-c { stroke: var(--paper); stroke-width: 1px; }
+.pvp .db-ci.with, .pvp .db-c.with { fill: var(--blue); }
+.pvp .db-ci.against, .pvp .db-c.against { fill: var(--red); }
+.pvp .db-ci.neutral, .pvp .db-c.neutral { fill: var(--muted); }
+.pvp .db-c.partial { fill: var(--paper); stroke-width: 1.5px; }
+.pvp .db-c.partial.with { stroke: var(--blue); }
+.pvp .db-c.partial.against { stroke: var(--red); }
+.pvp .db-hit { fill: transparent; }
+.pvp .db-label { font-family: var(--font-support); font-size: 12px; fill: var(--muted); }
+.pvp .db-label .v { fill: var(--ink); font-weight: 500; }
+.pvp .tooltip--global { max-width: min(20rem, calc(100vw - 16px)); }
+.pvp [data-tip] { cursor: help; }
+.pvp [data-tip]:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+.pvp .db-c.faded { opacity: 0.22; }
+.pvp .db-c.sel { stroke: var(--ink); stroke-width: 2px; }
+.pvp .db-sel-label { font-family: var(--font-support); font-size: 11.5px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+.pvp .db-sel-lead { stroke: var(--ink); stroke-width: 1px; }
+.pvp .db-pick { cursor: pointer; }
+.pvp .tt__hint { margin-top: 0.4rem; font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
+.pvp .vd__pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); }
+.pvp .vd__pick select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 0.35rem 0.6rem; max-width: 100%; }
+.pvp .vd__pick select:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.pvp .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.pvp .sw--with { background: var(--blue); }
+.pvp .sw--against { background: var(--red); }
+.pvp .sw--partial { box-shadow: inset 0 0 0 1.5px var(--muted); }
+/* ---------- Proposal details: summary, recommendations, links ---------- */
+.pvp .p-sub { font-size: 0.875rem; color: var(--muted); }
+.pvp .p-summary { max-width: 40rem; line-height: 1.5; }
+.pvp .p-src { font-family: var(--font-support); font-size: 0.75rem; color: var(--link); white-space: nowrap; }
+.pvp .p-meta { font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); max-width: 44rem; }
+.pvp .p-meta b { color: var(--ink); font-weight: 500; }
+.pvp .p-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; font-family: var(--font-support); font-size: 0.8125rem; }
+.pvp .p-links > span { color: var(--muted); margin-right: 0.25rem; }
+.pvp .p-links a { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--link); text-decoration: none; cursor: pointer; }
+.pvp .p-links a:hover { border-color: var(--link); }
+.pvp .p-links a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.pvp .ext { font-size: 0.85em; }
+.pvp .up__title { font-weight: 500; }
+/* Long German compounds (e.g. committee names) must never widen the page on a phone. */
+.pvp .p-meta, .pvp .p-sub, .pvp .p-summary, .pvp .vd__title, .pvp .up__title, .pvp .split__title, .pvp .tt__title { overflow-wrap: anywhere; }
+.pvp [lang="de"] { hyphens: auto; }
+.pvp .day__items li { gap: 0.35rem; }
+.pvp .tablewrap a { color: var(--link); }
+/* ---------- Footer ---------- */
+.pvp .foot { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--gap); padding-block: clamp(2.5rem, 6vw, 4rem); }
+.pvp .foot h2 { font-size: var(--step-1); }
+.pvp .foot ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.5rem; color: var(--muted); max-width: 44rem; }
+.pvp .foot .credit { font-family: var(--font-support); margin-top: 1.25rem; font-size: var(--step--1); color: var(--muted); }
+.pvp .error { padding: 1rem 1.25rem; border-radius: var(--radius); border: 1px solid var(--red); }
+@container pvp (max-width: 760px) {
+  .pvp .masthead { grid-template-columns: minmax(0, 1fr); }
+  .pvp .mark { width: 96px; height: 96px; order: -1; }
+  .pvp .mark__square { width: 60px; height: 60px; border-radius: 7px; }
+  .pvp .mark__circle { width: 60px; height: 60px; }
+  .pvp .mark__half { width: 42px; height: 21px; right: 4px; }
+  .pvp .hero { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .pvp .block, .pvp .foot { grid-template-columns: minmax(0, 1fr); }
+  .pvp .seg button { padding: 0.3rem 0.6rem; font-size: 0.875rem; }
+  .pvp .day__date { width: 68px; height: 68px; }
+  .pvp .day__date b { font-size: 1.375rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pvp .dot { transition: opacity 160ms ease; }
+}

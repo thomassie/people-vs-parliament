@@ -1,0 +1,51 @@
+/* Colour themes for every page of the site (supplied 5 Nov 2026).
+   Use the tokens, never raw hex values, so both themes stay in step.
+   Contrast against --paper (WCAG; 4.5 = normal text, 3 = large text and chart marks):
+     light: ink 10.0, muted 5.5, link 6.2, blue 5.2, red 4.2, yellow 1.9, rule 1.3
+     dark:  ink 10.0, muted 7.1, link 6.6, blue 5.6, red 3.6, yellow 6.8, rule 1.7
+   So: red is for marks and large text only (not body text); in the light theme yellow is a
+   fill colour only (no text, no thin lines); rule is for dividers, never information.
+   Red and blue differ by hue, not lightness: pair them with labels or a second cue. */
+
+:root {
+  --paper:  #FFFFFF;
+  --ink:    #3E4349;
+  --muted:  #626A73;
+  --rule:   #DDE1E5;
+  --red:    #D94B30;
+  --blue:   #4A7194;
+  --yellow: #D9BA3D;
+  --link:   #3C6488;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:  #2D3238;
+    --ink:    #E0E3E7;
+    --muted:  #B9C1C9;
+    --rule:   #4C535B;
+    --red:    #E45B35;
+    --blue:   #85B0D0;
+    --yellow: #D9BA3D;
+    --link:   #9ABED9;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:  #2D3238;
+  --ink:    #E0E3E7;
+  --muted:  #B9C1C9;
+  --rule:   #4C535B;
+  --red:    #E45B35;
+  --blue:   #85B0D0;
+  --yellow: #D9BA3D;
+  --link:   #9ABED9;
+  color-scheme: dark;
+}
+
+body { background: var(--paper); color: var(--ink); }
+a { color: var(--link); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+hr { border: 0; border-top: 1px solid var(--rule); }
