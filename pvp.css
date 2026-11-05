@@ -62,6 +62,16 @@
 /* An inline graphic, not an empty box: every engine puts its bottom edge on the text baseline. */
 .pvp .title-dot { display: inline-block; width: 0.15em; height: 0.15em; margin: 0 0 0 0.06em; padding: 0; vertical-align: baseline; overflow: visible; }
 .pvp .title-dot circle { fill: var(--red); }
+/* ---------- Top bar (standalone page): colour theme ---------- */
+.pvp .topbar { display: flex; justify-content: flex-end; padding-top: 1rem; }
+.pvp .topbar + .masthead { padding-top: clamp(1.5rem, 4vw, 3rem); }
+/* Bauhaus glyphs, drawn in the text colour: open circle = light, full = dark, half = auto. */
+.pvp .seg--theme button { display: inline-flex; align-items: center; gap: 0.45em; }
+.pvp .seg--theme button::before {
+  content: ""; flex: none; width: 0.7em; height: 0.7em; border-radius: 50%;
+  border: 1.5px solid currentColor; background: transparent; }
+.pvp .seg--theme button[value="dark"]::before { background: currentColor; }
+.pvp .seg--theme button[value="auto"]::before { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
 /* ---------- Masthead ---------- */
 .pvp .masthead {
   display: grid;

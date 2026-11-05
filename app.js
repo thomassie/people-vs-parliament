@@ -4,7 +4,8 @@
 
    data-base       where data/*.json live (default: next to the page)
    data-header     "false" leaves out the built-in title (when the host page has its own)
-   data-layout     "standalone" adds the page's own width and side gutters
+   data-layout     "standalone" adds the page's own width and side gutters, and the colour-theme
+                   switch (Auto, Light, Dark). Embedded, the host page's own theme switch decides.
 
    Reads data/*.json, written by pipeline/run.py from the semantic layer. No database access here.
    Styles: pvp.css (scoped under .pvp); colours come from the host's tokens or theme.css. */
@@ -15,8 +16,12 @@
   if (!root || typeof d3 === 'undefined') return;
   const BASE = root.dataset.base ? root.dataset.base.replace(/\/?$/, '/') : '';
   root.classList.add('pvp');
-  if (root.dataset.layout === 'standalone') root.classList.add('pvp--standalone');
-  root.innerHTML = `<div class="masthead wrap">
+  const STANDALONE = root.dataset.layout === 'standalone';
+  if (STANDALONE) root.classList.add('pvp--standalone');
+  root.innerHTML = (STANDALONE ? `<div class="topbar wrap">
+  <div class="seg seg--theme" role="group" aria-label="Colour theme" id="pvp-theme"></div>
+</div>
+` : '') + `<div class="masthead wrap">
   <div class="masthead__text">
     <p class="eyebrow">Swiss Democracy Lab</p>
     <h1>People vs Parliament<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h1>
@@ -118,6 +123,40 @@
 </section>`;
   // data-header="false": the host page shows its own title, so drop ours (title, label, mark) but keep the intro question
   if (root.dataset.header === 'false') root.querySelectorAll('.masthead h1, .masthead .eyebrow, .masthead .mark').forEach((n) => n.remove());
+
+  // ---------- colour theme (standalone page only) ----------
+  // Auto follows the device. Light or Dark is set as data-theme on <html>, which theme.css reads,
+  // and kept in localStorage ('pvp-theme'); index.html applies it before the first paint.
+  // Every colour on the page is a theme token, so nothing needs redrawing.
+  const themeEl = root.querySelector('#pvp-theme');
+  if (themeEl) {
+    const html = document.documentElement;
+    const dark = window.matchMedia('(prefers-color-scheme: dark)');
+    let theme = 'auto';
+    try { const t = localStorage.getItem('pvp-theme'); if (t === 'light' || t === 'dark') theme = t; } catch (e) { /* storage unavailable */ }
+    const applyTheme = () => {
+      if (theme === 'auto') html.removeAttribute('data-theme'); else html.setAttribute('data-theme', theme);
+      themeEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === theme)));
+    };
+    [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].forEach(([val, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.value = val;
+      b.id = 'pvp-theme-' + val;
+      b.textContent = label;
+      if (val === 'auto') {
+        b.setAttribute('data-tip', 'Follows your device’s setting.');
+        b.__tip = () => 'Follows your device’s setting, now ' + (dark.matches ? 'dark' : 'light') + '.';
+      }
+      b.addEventListener('click', () => {
+        theme = val;
+        try { if (val === 'auto') localStorage.removeItem('pvp-theme'); else localStorage.setItem('pvp-theme', val); } catch (e) { /* storage unavailable */ }
+        applyTheme();
+      });
+      themeEl.appendChild(b);
+    });
+    applyTheme();
+  }
 
   const FORM = { 1: 'Mandatory referendum', 2: 'Optional referendum', 3: 'Popular initiative' };
   const FORM_ANY = Object.assign({ 4: 'Direct counter-proposal', 5: 'Tie-break question' }, FORM);
