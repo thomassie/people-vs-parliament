@@ -161,22 +161,37 @@
 .pvp .key--circle { border-radius: 50%; background: var(--blue); }
 .pvp .key--circle.against { background: var(--red); }
 /* ---------- Filters & legend ---------- */
-.pvp .filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; }
-.pvp .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--rule); }
+.pvp .filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
+/* Switches ("bar index"): plain labels on a thin rule, a thick ink bar under the selected one.
+   Ink and paper only, so they never borrow the charts' colours or shapes. The bars are inset
+   shadows, so a wrapped row keeps its own rule and nothing shifts when the selection moves
+   (Google Sans Code keeps its width at weight 500). */
+.pvp .seg { display: inline-flex; flex-wrap: wrap; }
 .pvp .seg button {
   font: inherit;
   font-family: var(--font-support);
   font-size: 0.875rem;
-  color: var(--ink);
+  line-height: 1.2;
+  color: var(--muted);
   background: transparent;
   border: 0;
-  border-radius: 999px;
-  padding: 0.375rem 0.875rem;
+  border-radius: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  box-shadow: inset 0 -1px 0 var(--rule);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.pvp .seg button:hover { background: var(--paper); }
-.pvp .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.pvp .seg button:hover { color: var(--ink); box-shadow: inset 0 -4px 0 var(--rule); }
+.pvp .seg button[aria-pressed="true"] { color: var(--ink); font-weight: 500; box-shadow: inset 0 -4px 0 var(--ink); }
 .pvp .seg button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+@media (forced-colors: active) {
+  .pvp .seg button { border-bottom: 1px solid CanvasText; box-shadow: none; }
+  .pvp .seg button[aria-pressed="true"] { border-bottom-width: 4px; }
+}
 .pvp .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-family: var(--font-support); font-size: 0.875rem; }
 .pvp .legend span { display: inline-flex; align-items: center; gap: 0.5rem; }
 .pvp .legend .count { font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); }
@@ -377,7 +392,7 @@
   .pvp .mark__half { width: 42px; height: 21px; right: 4px; }
   .pvp .hero { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .pvp .block, .pvp .foot { grid-template-columns: minmax(0, 1fr); }
-  .pvp .seg button { padding: 0.3rem 0.6rem; font-size: 0.875rem; }
+  .pvp .seg button { padding: 0 0.6rem; }
   .pvp .day__date { width: 68px; height: 68px; }
   .pvp .day__date b { font-size: 1.375rem; }
 }
