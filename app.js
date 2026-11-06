@@ -135,9 +135,10 @@
       <li>The people&rsquo;s yes share is the official national result. A proposal can win the popular vote and still fail for lack of a majority of cantons.</li>
       <li>Proposal summaries are neutral one- or two-sentence descriptions, each written from the official information page linked beside it. Titles, recommendations and links come from Swissvotes.</li>
       <li>Communes: results of communes that have since merged are added together and shown on today&rsquo;s communes (official commune register). A few small communes are counted together with a neighbour and have no result of their own.</li>
-      <li>Income is the median taxable income per tax return, estimated from the Federal Tax Administration&rsquo;s income classes (direct federal tax, residents taxed all year). Married couples file one return.</li>
+      <li>Income is the median taxable income per tax return, estimated from the Federal Tax Administration&rsquo;s income classes (direct federal tax, residents taxed all year). Married couples file one return. Tax statistics leave out international civil servants and most foreign residents taxed at source, which lowers the figures most in Geneva.</li>
+      <li>Residents are the permanent resident population at the end of the year (Federal Statistical Office), Swiss and foreign, including people who cannot vote.</li>
     </ul>
-    <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. <span id="pvp-freshness"></span></p>
+    <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
   </div>
 </section>`;
   // data-header="false": the host page shows its own title, so drop ours (title, label, mark) but keep the intro question
@@ -863,7 +864,8 @@
       html += '<dl class="tt__rows">' + row('Against the National Council', r.against + ' of ' + r.n + ' (' + f1(share) + '%)') +
         (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>';
     }
-    html += '<dl class="tt__rows">' + row('Median taxable income', r.income_median ? chf(r.income_median) : 'too few returns') + '</dl>';
+    html += '<dl class="tt__rows">' + (r.pop ? row('Residents', d3.format(',')(r.pop)) : '') +
+      row('Median taxable income', r.income_median ? chf(r.income_median) : 'too few returns') + '</dl>';
     if (share != null) html += '<p class="tt__out">More often against parliament than ' + cmRank(share) + '% of communes.</p>';
     return html;
   }
@@ -872,6 +874,7 @@
     const share = cmShare(r);
     return r.name + ' (' + r.canton + '): ' + (share == null ? 'no separate result.'
       : r.against + ' of ' + r.n + ' votes against the National Council (' + f1(share) + '%), more often than ' + cmRank(share) + '% of communes.') +
+      (r.pop ? ' ' + d3.format(',')(r.pop) + ' residents.' : '') +
       (r.income_median ? ' Median taxable income ' + chf(r.income_median) + '.' : '');
   }
 
@@ -1072,8 +1075,9 @@
     const tip = el._tip || (el._tip = tooltip(el));
     tip.hide();
     const rows = CM.rows.filter((r) => r.income_median && cmShare(r) != null);
-    const m = { t: 30, r: 16, b: 46, l: 42 };
-    const H = Math.round(Math.max(260, Math.min(440, W * 0.6)));
+    const keyH = rows.some((r) => r.pop) ? (W < 480 ? 24 : 32) : 0;   // row for the bubble-size key
+    const m = { t: 30 + keyH, r: 16, b: 46, l: 42 };
+    const H = Math.round(Math.max(260, Math.min(440, W * 0.6))) + keyH;
     const x = d3.scaleLinear().domain(d3.extent(rows, (r) => r.income_median)).nice().range([m.l, W - m.r]);
     const y = d3.scaleLinear().domain([0, Math.max(50, Math.ceil(d3.max(rows, cmShare) / 10) * 10)]).range([H - m.b, m.t]);
     const svg = d3.select(el).insert('svg', ':first-child').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H);
@@ -1093,8 +1097,27 @@
       svg.append('text').attr('class', 'cm-reflabel').attr('x', W - m.r).attr('y', y(CM.nat) - 6).attr('text-anchor', 'end')
         .text('Switzerland as a whole ' + f1(CM.nat) + '%');
     }
-    svg.append('g').selectAll('circle').data(rows).join('circle').attr('class', 'cm-dot')
-      .attr('cx', (r) => x(r.income_median)).attr('cy', (r) => y(cmShare(r))).attr('r', W < 480 ? 1.8 : 2.4);
+    // Bubbles: residents. Area true to population would leave a few city discs and dust, so the
+    // radius grows with the fourth root of population (area with its square root).
+    const rMax = W < 480 ? 11 : 18;
+    const rs = d3.scalePow().exponent(0.25).domain([0, d3.max(rows, (r) => r.pop || 0) || 1]).range([0, rMax]);
+    const rad = (r) => (r.pop ? Math.max(1, rs(r.pop)) : 1.5);
+    svg.append('g').selectAll('circle').data(rows.slice().sort((a, b) => (b.pop || 0) - (a.pop || 0))).join('circle')
+      .attr('class', 'cm-bubble').attr('cx', (r) => x(r.income_median)).attr('cy', (r) => y(cmShare(r))).attr('r', rad);
+    if (rows.some((r) => r.pop)) {   // size key: a row above the plot, circles side by side
+      const keys = [1000, 10000, 100000].filter((k) => k <= rs.domain()[1]);
+      const base = keyH - 4;
+      const gk = svg.append('g').attr('class', 'cm-sizekey');
+      let kx = m.l;
+      gk.append('text').attr('x', kx).attr('y', base - 3).text('Residents');
+      kx += 66;
+      keys.forEach((k) => {
+        const rk = rs(k);
+        gk.append('circle').attr('cx', kx + rk).attr('cy', base - rk).attr('r', rk);
+        gk.append('text').attr('x', kx + 2 * rk + 5).attr('y', base - 3).text(d3.format(',')(k));
+        kx += 2 * rk + 5 + d3.format(',')(k).length * 6.4 + 14;
+      });
+    }
     // trend: median share in each tenth of communes by income
     const byIncome = rows.slice().sort((a, b) => a.income_median - b.income_median);
     const trend = d3.range(10).map((k) => {
@@ -1103,16 +1126,17 @@
     });
     svg.append('path').attr('class', 'cm-trend').attr('d', d3.line().x((d) => x(d[0])).y((d) => y(d[1])).curve(d3.curveMonotoneX)(trend));
     // label the largest cities: first free spot right, left, above or below the dot
-    const big = rows.slice().sort((a, b) => (b.taxpayers || 0) - (a.taxpayers || 0)).slice(0, W < 480 ? 3 : 6);
+    const big = rows.slice().sort((a, b) => (b.pop || b.taxpayers || 0) - (a.pop || a.taxpayers || 0)).slice(0, W < 480 ? 3 : 6);
     const lab = svg.append('g').attr('class', 'cm-cities');
-    const pts = big.map((r) => ({ r, cx: x(r.income_median), cy: y(cmShare(r)) }));
-    pts.forEach((p) => lab.append('circle').attr('cx', p.cx).attr('cy', p.cy).attr('r', 3));
-    const boxes = pts.map((p) => ({ x0: p.cx - 4, x1: p.cx + 4, y0: p.cy - 4, y1: p.cy + 4 }));
+    const pts = big.map((r) => ({ r, cx: x(r.income_median), cy: y(cmShare(r)), rr: rad(r) }));
+    pts.forEach((p) => lab.append('circle').attr('cx', p.cx).attr('cy', p.cy).attr('r', 2.5));
+    const boxes = pts.map((p) => ({ x0: p.cx - 3, x1: p.cx + 3, y0: p.cy - 3, y1: p.cy + 3 }));
     const hits = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
     pts.forEach((p) => {
       const name = p.r.name.replace(/\s*\(.*\)$/, '').replace(/^Genève$/, 'Geneva').replace(/^Zürich$/, 'Zurich');
       const tw = name.length * 6.6 + 2;
-      const spots = [[p.cx + 6, p.cy, 'start'], [p.cx - 6, p.cy, 'end'], [p.cx, p.cy - 11, 'middle'], [p.cx, p.cy + 13, 'middle']];
+      const o = Math.max(6, p.rr + 4);
+      const spots = [[p.cx + o, p.cy, 'start'], [p.cx - o, p.cy, 'end'], [p.cx, p.cy - o - 5, 'middle'], [p.cx, p.cy + o + 7, 'middle']];
       const box = ([lx, ly, a]) => ({ x0: a === 'start' ? lx : a === 'end' ? lx - tw : lx - tw / 2, x1: a === 'start' ? lx + tw : a === 'end' ? lx : lx + tw / 2, y0: ly - 7, y1: ly + 7 });
       const spot = spots.find((sp) => !hits(box(sp)) && box(sp).x0 >= 0 && box(sp).x1 <= W) || spots[0];
       boxes.push(box(spot));
@@ -1132,10 +1156,10 @@
           tip.hide();
           return;
         }
-        const cx = x(r.income_median), cy = y(cmShare(r)), right = cx < W * 0.66;
-        ring.attr('cx', cx).attr('cy', cy).attr('visibility', 'visible');
-        hlDot.attr('cx', cx).attr('cy', cy).attr('visibility', 'visible');
-        hlLab.attr('x', cx + (right ? 12 : -12)).attr('y', cy).attr('text-anchor', right ? 'start' : 'end')
+        const cx = x(r.income_median), cy = y(cmShare(r)), right = cx < W * 0.66, rr = Math.max(4.5, rad(r));
+        ring.attr('cx', cx).attr('cy', cy).attr('r', rr + 3.5).attr('visibility', 'visible');
+        hlDot.attr('cx', cx).attr('cy', cy).attr('r', rr).attr('visibility', 'visible');
+        hlLab.attr('x', cx + (right ? rr + 8 : -rr - 8)).attr('y', cy).attr('text-anchor', right ? 'start' : 'end')
           .text(plainName(r.name)).attr('visibility', show ? 'hidden' : 'visible');
         if (show) lab.selectAll('text').attr('visibility', null);
         if (show) tip.show(cmTip(r), cx, cy); else tip.hide();
@@ -1145,9 +1169,15 @@
       .attr('aria-hidden', 'true')
       .on('pointermove pointerdown', (ev) => {
         const [px, py] = d3.pointer(ev);
-        const r = rows[delaunay.find(px, py)];
-        const near = r && Math.hypot(x(r.income_median) - px, y(cmShare(r)) - py) <= 20;
-        cmFocus(near ? r.id : CM.pinned, near ? 'income' : 'pinned');
+        let r = null;
+        rows.forEach((c) => {   // the smallest bubble under the pointer is the one drawn on top
+          if (Math.hypot(x(c.income_median) - px, y(cmShare(c)) - py) <= rad(c) + 1.5 && (!r || rad(c) < rad(r))) r = c;
+        });
+        if (!r) {
+          const c = rows[delaunay.find(px, py)];
+          if (c && Math.hypot(x(c.income_median) - px, y(cmShare(c)) - py) <= 14) r = c;
+        }
+        cmFocus(r ? r.id : CM.pinned, r ? 'income' : 'pinned');
       })
       .on('pointerleave', () => cmFocus(CM.pinned, 'income'));
     if (CM.focus != null) CM.inc.mark(CM.focus, false);
@@ -1178,11 +1208,13 @@
       why.hidden = false;
       const rc = sum.income_alignment_rank_corr;
       $('#cm-income-lede').textContent = rc == null ? '' : rc >= 0.3
-        ? 'Each dot is a commune. Where incomes are higher, the majority went against the National Council less often.'
-        : rc <= -0.3 ? 'Each dot is a commune. Where incomes are higher, the majority went against the National Council more often.'
-        : 'Each dot is a commune. Income and voting against parliament are only loosely related.';
+        ? 'Each bubble is a commune, sized by its residents. Where incomes are higher, the majority went against the National Council less often.'
+        : rc <= -0.3 ? 'Each bubble is a commune, sized by its residents. Where incomes are higher, the majority went against the National Council more often.'
+        : 'Each bubble is a commune, sized by its residents. Income and voting against parliament are only loosely related.';
       $('#cm-income-note').textContent = 'Income: median taxable income per tax return in ' + sum.income_tax_year +
-        ', estimated from the Federal Tax Administration’s income classes (communes with very few returns left out). Line: the typical commune in each tenth by income.' +
+        ', estimated from the Federal Tax Administration’s income classes (communes with very few returns left out). Tax statistics leave out international civil servants and most foreign residents taxed at source, which matters most in Geneva.' +
+        (sum.population_year ? ' Bubbles: permanent residents at the end of ' + sum.population_year + '; size is compressed (area grows with the square root of residents) so small communes stay visible.' : '') +
+        ' Line: the typical commune in each tenth by income.' +
         (rc == null ? '' : ' Rank correlation ' + d3.format('+.2f')(-rc) + '. A correlation, not a cause: richer communes differ in many other ways too.');
     }
 

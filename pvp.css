@@ -351,7 +351,9 @@
 .pvp .cm-sub { font-size: var(--step-1); margin-top: 1rem; }
 .pvp .cm-lede { max-width: 40rem; }
 .pvp .cm-lede:empty { display: none; }
-.pvp .cm-dot { fill: var(--muted); fill-opacity: 0.4; }
+.pvp .cm-bubble { fill: var(--muted); fill-opacity: 0.16; stroke: var(--muted); stroke-opacity: 0.5; stroke-width: 0.6px; }
+.pvp .cm-sizekey circle { fill: none; stroke: var(--muted); stroke-width: 0.8px; }
+.pvp .chart .cm-sizekey text { font-size: 11px; }
 .pvp .cm-trend { fill: none; stroke: var(--red); stroke-width: 2.5px; stroke-linecap: round; }
 .pvp .cm-ref { stroke: var(--ink); stroke-opacity: 0.6; stroke-dasharray: 4 3; }
 .pvp .chart .cm-reflabel { fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
