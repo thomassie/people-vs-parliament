@@ -138,6 +138,7 @@
       <li>Communes: results of communes that have since merged are added together and shown on today&rsquo;s communes (official commune register). A few small communes are counted together with a neighbour and have no result of their own.</li>
       <li>Income is the median taxable income per tax return, estimated from the Federal Tax Administration&rsquo;s income classes (direct federal tax, residents taxed all year). Married couples file one return. Tax statistics leave out international civil servants and most foreign residents taxed at source, which lowers the figures most in Geneva.</li>
       <li>Residents are the permanent resident population at the end of the year (Federal Statistical Office), Swiss and foreign, including people who cannot vote.</li>
+      <li>Voters are the ballots cast in a commune per proposal, averaged over the same votes as the map. A group&rsquo;s share of all voters is its voters divided by the voters of all communes. The Swiss abroad, who vote through their canton (about 1% of ballots), are not included.</li>
     </ul>
     <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
   </div>
@@ -878,6 +879,7 @@
         (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>';
     }
     html += '<dl class="tt__rows">' + (r.pop ? row('Residents', d3.format(',')(r.pop)) : '') +
+      (r.voters ? row('Voters per vote', d3.format(',')(r.voters)) : '') +
       row('Median taxable income per tax return', r.income_median ? chf(r.income_median) : 'too few returns') +
       (r.tax_pc != null ? row('Federal tax per resident', 'CHF ' + d3.format(',')(r.tax_pc)) : '') + '</dl>';
     if (share != null) html += '<p class="tt__out">More often against parliament than ' + cmRank(share) + '% of communes.</p>';
@@ -922,13 +924,24 @@
       .classed('cm-sel', (i) => b != null && i === b).classed('cm-unsel', (i) => b != null && i !== b);
     d3.select(root).selectAll('#pvp-cm-legend .cm-strip rect').attr('aria-pressed', (i) => String(i === b));
   }
+  // People, not area: voters per vote in a band (ballots cast per proposal, averaged) and their
+  // share of all voters in the communes. Null when the data carry no voters.
+  function cmVoters(b) {
+    if (!CM.votersTotal) return null;
+    let v = 0;
+    CM.rows.forEach((r) => { const s = cmShare(r); if (s != null && r.voters && cmBin(s) === b) v += r.voters; });
+    return { v, pct: (100 * v) / CM.votersTotal };
+  }
+  const roughly = (v) => d3.format(',')(v >= 100000 ? Math.round(v / 1000) * 1000 : v >= 10000 ? Math.round(v / 100) * 100 : Math.round(v / 10) * 10);
   function cmSetBand(i) {
     CM.band = i == null || CM.band === i ? null : i;
     cmApplyBand();
     const n = CM.band == null ? 0 : CM.sorted.filter((v) => cmBin(v) === CM.band).length;
+    const vo = CM.band == null ? null : cmVoters(CM.band);
     $('#cm-status').textContent = CM.band == null ? 'Hover or tap a commune for details.'
-      : d3.format(',')(n) + ' communes went against the National Council in ' + bandLabel(CM.band).replace('Under', 'under') +
-        ' of votes, highlighted on the map, in the dots above and in the bubble chart. Click the band again or press Escape to show all.';
+      : d3.format(',')(n) + ' communes went against the National Council in ' + bandLabel(CM.band).replace('Under', 'under') + ' of votes.' +
+        (vo ? ' On average about ' + roughly(vo.v) + ' people voted there on each proposal, ' + f1(vo.pct) + '% of all voters.' : '') +
+        ' They are highlighted on the map, in the dots above and in the bubble chart. Click the band again or press Escape to show all.';
   }
 
   // Raincloud: how the communes spread along the share of votes against the National Council.
@@ -998,7 +1011,8 @@
 
     svg.append('g').attr('class', 'cm-strip').call(band(stripY, stripH)).selectAll('rect')
       .attr('tabindex', 0).attr('role', 'button').attr('aria-pressed', 'false')
-      .attr('aria-label', (i) => bandLabel(i) + ' of votes against: ' + d3.format(',')(counts[i]) + ' communes. Highlight them on the map.')
+      .attr('aria-label', (i) => bandLabel(i) + ' of votes against: ' + d3.format(',')(counts[i]) + ' communes' +
+        (cmVoters(i) ? ' with ' + f1(cmVoters(i).pct) + '% of voters' : '') + '. Highlight them on the map.')
       .on('keydown', (ev, i) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); cmSetBand(i); } })
       .on('focus', (ev, i) => tip.show(bandTip(i), x((bands[i] + bands[i + 1]) / 2), stripY))
       .on('blur', () => tip.hide());
@@ -1029,7 +1043,8 @@
     };
 
     const bandTip = (i) => '<p class="tt__title">' + bandLabel(i) + ' of votes against</p><dl class="tt__rows">' +
-      row('Communes', d3.format(',')(counts[i])) + row('Share of communes', f1((100 * counts[i]) / n) + '%') + '</dl>' +
+      row('Communes', d3.format(',')(counts[i])) + row('Share of communes', f1((100 * counts[i]) / n) + '%') +
+      (cmVoters(i) ? row('Voters per vote', 'about ' + roughly(cmVoters(i).v)) + row('Share of voters', f1(cmVoters(i).pct) + '%') : '') + '</dl>' +
       '<p class="tt__hint">' + (CM.band === i ? 'Click again to show all communes.' : 'Click to highlight these communes on the map.') + '</p>';
     const boxTip = '<p class="tt__title">The typical commune</p><dl class="tt__rows">' +
       row('Median', f1(q50) + '%') + row('Middle half', f1(q25) + '–' + f1(q75) + '%') + row('Middle 90%', f1(q05) + '–' + f1(q95) + '%') +
@@ -1278,6 +1293,7 @@
 
   function renderCommunes(rows, sum, topo) {
     CM.rows = rows;
+    CM.votersTotal = d3.sum(rows, (r) => r.voters || 0);
     CM.byId = new Map(rows.map((r) => [r.id, r]));
     CM.sum = sum;
     CM.nat = sum ? 100 - sum.national_pct_with_nr_majority : null;
