@@ -104,7 +104,7 @@
         <input type="search" id="pvp-cm-find" list="pvp-cm-list" placeholder="e.g. Winterthur" autocomplete="off" spellcheck="false">
         <datalist id="pvp-cm-list"></datalist>
       </div>
-      <div class="cm-legend" id="pvp-cm-legend" aria-hidden="true"></div>
+      <div class="cm-legend" id="pvp-cm-legend"></div>
       <div class="chart cm-map" id="pvp-chart-communes"><p class="note">Loading the commune map&hellip;</p></div>
       <p class="note" id="pvp-cm-status" aria-live="polite">Hover or tap a commune for details.</p>
       <h3 class="cm-sub" id="pvp-h-income">Income and voting against parliament</h3>
@@ -822,7 +822,7 @@
   // data/communes.json: one row per commune polygon (today's communes); data/commune_summary.json:
   // reference figures; data/communes.topo.json: BFS generalised boundaries in LV95 metres, decoded
   // below (no extra library). Loaded only when the section comes near the screen.
-  const CM = { rows: [], byId: new Map(), featById: new Map(), sum: null, nat: null, sorted: [], pinned: null };
+  const CM = { rows: [], byId: new Map(), featById: new Map(), sum: null, nat: null, sorted: [], pinned: null, focus: null };
   const CM_THRESH = [15, 20, 25, 30, 35, 40];   // share of votes against the National Council, %
   const CM_CITIES = [261, 6621, 2701, 5586, 351, 230, 5192, 1061, 3203];   // Zurich, Geneva, Basel, Lausanne, Bern, Winterthur, Lugano, Lucerne, St. Gallen
   const cmShare = (r) => (r && r.n ? (100 * r.against) / r.n : null);
@@ -876,40 +876,131 @@
   }
 
   function cmFocus(id, source, xy) {
+    CM.focus = id;
     const small = $('#chart-communes').clientWidth < 600;   // on phones the status line carries a search result
     if (CM.map) CM.map.mark(id, source === 'map' || (source === 'find' && !small), xy);
     if (CM.inc) CM.inc.mark(id, source === 'income', xy);
+    if (CM.rain) CM.rain.mark(id, source === 'rain', xy);
     const r = id != null ? CM.byId.get(id) : null;
     if (source === 'find') $('#cm-status').textContent = r ? cmStatus(r) : 'No commune of that name.';
   }
 
-  function drawCmLegend(el) {
-    const W = Math.min(Math.round(el.clientWidth), 460);
+  const plainName = (n) => n.replace(/\s*\(.*\)$/, '').replace(/^Genève$/, 'Geneva').replace(/^Zürich$/, 'Zurich').replace(/^Luzern$/, 'Lucerne');
+  const jitter = (id) => { const v = Math.sin(id * 12.9898) * 43758.5453; return v - Math.floor(v); };   // stable per commune
+  const bandLabel = (i) => (i === 0 ? 'Under ' + CM_THRESH[0] + '%' : i === CM_THRESH.length ? CM_THRESH[i - 1] + '% or more'
+    : CM_THRESH[i - 1] + '–' + CM_THRESH[i] + '%');
+
+  // Raincloud: how the communes spread along the share of votes against the National Council.
+  // Cloud = density, filled with the map's bands so it doubles as the colour key; box = median and
+  // middle half, whiskers = middle 90%; rain = one dot per commune. The axis is linear in percent.
+  function drawRaincloud(el) {
+    const W = Math.round(el.clientWidth);
     if (!W) return;
-    el.innerHTML = '<p class="cm-legend-title">Share of votes against the National Council</p>';
-    const counts = new Array(CM_THRESH.length + 1).fill(0);
-    CM.rows.forEach((r) => { const v = cmShare(r); if (v != null) counts[cmBin(v)] += 1; });
-    const n = counts.length, w = W / n, top = 30, h = 12;
-    const svg = d3.select(el).append('svg').attr('width', W).attr('height', top + h + 20).attr('viewBox', '0 0 ' + W + ' ' + (top + h + 20));
-    svg.append('g').selectAll('rect').data(counts).join('rect')
-      .attr('class', (d, i) => 'cm-c cm-b' + i).attr('x', (d, i) => i * w).attr('y', top).attr('width', w - 1).attr('height', h);
-    svg.append('g').selectAll('text').data(counts).join('text').attr('class', 'cm-count')
-      .attr('x', (d, i) => i * w + w / 2).attr('y', top - 4).attr('text-anchor', 'middle').text((d) => d3.format(',')(d));
-    svg.append('g').selectAll('text').data(CM_THRESH).join('text')
-      .attr('x', (d, i) => (i + 1) * w).attr('y', top + h + 15).attr('text-anchor', 'middle')
-      .text((d, i) => d + (i === CM_THRESH.length - 1 ? '%' : ''));
-    if (CM.nat != null) {   // where Switzerland as a whole sits on the scale
-      const i = cmBin(CM.nat), lo = i ? CM_THRESH[i - 1] : 0, hi = CM_THRESH[i] || lo + 5;
-      const x = i * w + ((CM.nat - lo) / (hi - lo)) * w;
-      svg.append('path').attr('class', 'cm-natmark').attr('d', 'M' + x + ',' + (top - 1) + 'l-4,-6h8z');
-      svg.append('text').attr('class', 'cm-natlabel').attr('x', Math.min(Math.max(x, 60), W - 60)).attr('y', 9).attr('text-anchor', 'middle')
-        .text('Switzerland ' + f1(CM.nat) + '%');
+    el.innerHTML = '<p class="cm-legend-title">Share of votes against the National Council: one dot per commune</p>';
+    const tip = tooltip(el);
+    const vals = CM.sorted, n = vals.length;
+    const pts = CM.rows.map((r) => ({ r, v: cmShare(r) })).filter((p) => p.v != null);
+    const small = W < 480;
+    const max = Math.max(55, Math.ceil(d3.max(vals) / 5) * 5);
+    const x = d3.scaleLinear().domain([0, max]).range([6, W - 6]);
+    const top = 24, cloudH = small ? 46 : 60, boxY = top + cloudH + 9, boxH = 9;
+    const rainY = boxY + boxH + 10, rainH = small ? 26 : 34, stripY = rainY + rainH + 9, stripH = 8, H = stripY + stripH + 20;
+    const q = (p) => d3.quantileSorted(vals, p);
+    const [q05, q25, q50, q75, q95] = [q(0.05), q(0.25), q(0.5), q(0.75), q(0.95)];
+
+    // density: Gaussian kernel, Silverman's bandwidth
+    const bw = 1.06 * d3.deviation(vals) * Math.pow(n, -0.2);
+    const dens = d3.range(0, max + 1e-9, max / 220).map((g) => {
+      let sum = 0;
+      for (let i = 0; i < n; i += 1) { const u = (g - vals[i]) / bw; sum += Math.exp(-0.5 * u * u); }
+      return [g, sum];
+    });
+    const yd = d3.scaleLinear().domain([0, d3.max(dens, (d) => d[1])]).range([top + cloudH, top]);
+    const bands = [0, ...CM_THRESH, max];
+    const counts = bands.slice(1).map(() => 0);
+    vals.forEach((v) => { counts[cmBin(v)] += 1; });
+
+    const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
+      .attr('role', 'img')
+      .attr('aria-label', 'Distribution of ' + d3.format(',')(n) + ' communes by share of votes against the National Council: median ' +
+        f1(q50) + '%, middle half ' + f1(q25) + ' to ' + f1(q75) + '%' + (CM.nat != null ? '; Switzerland as a whole ' + f1(CM.nat) + '%.' : '.'));
+    svg.append('clipPath').attr('id', 'pvp-cm-cloud').append('path')
+      .attr('d', d3.area().x((d) => x(d[0])).y0(top + cloudH).y1((d) => yd(d[1])).curve(d3.curveBasis)(dens));
+    const band = (y0, h) => (g) => g.selectAll('rect').data(d3.range(bands.length - 1)).join('rect')
+      .attr('class', (i) => 'cm-c cm-band cm-b' + i)
+      .attr('x', (i) => x(bands[i])).attr('width', (i) => Math.max(0, x(bands[i + 1]) - x(bands[i]))).attr('y', y0).attr('height', h);
+    svg.append('g').attr('clip-path', 'url(#pvp-cm-cloud)').call(band(top, cloudH));
+    svg.append('path').attr('class', 'cm-cloud-line').attr('d', d3.line().x((d) => x(d[0])).y((d) => yd(d[1])).curve(d3.curveBasis)(dens));
+
+    const gb = svg.append('g').attr('class', 'cm-box');
+    const mid = boxY + boxH / 2;
+    gb.append('line').attr('x1', x(q05)).attr('x2', x(q25)).attr('y1', mid).attr('y2', mid);
+    gb.append('line').attr('x1', x(q75)).attr('x2', x(q95)).attr('y1', mid).attr('y2', mid);
+    [q05, q95].forEach((v) => gb.append('line').attr('x1', x(v)).attr('x2', x(v)).attr('y1', boxY + 1).attr('y2', boxY + boxH - 1));
+    gb.append('rect').attr('x', x(q25)).attr('width', x(q75) - x(q25)).attr('y', boxY).attr('height', boxH);
+    gb.append('line').attr('class', 'cm-box-median').attr('x1', x(q50)).attr('x2', x(q50)).attr('y1', boxY - 2).attr('y2', boxY + boxH + 2);
+
+    const r0 = small ? 1.3 : 1.6;
+    const ry = (id) => rainY + jitter(id) * rainH;
+    svg.append('g').attr('class', 'cm-rain-dots').selectAll('circle').data(pts).join('circle')
+      .attr('cx', (p) => x(p.v)).attr('cy', (p) => ry(p.r.id)).attr('r', r0);
+
+    svg.append('g').call(band(stripY, stripH));
+    const ticks = [0, ...CM_THRESH, 50].filter((t) => t <= max);
+    svg.append('g').selectAll('text').data(ticks).join('text')
+      .attr('x', (t) => x(t)).attr('y', stripY + stripH + 14).attr('text-anchor', (t) => (t === 0 ? 'start' : 'middle'))
+      .text((t, i) => t + (i === ticks.length - 1 ? '%' : ''));
+
+    if (CM.nat != null) {   // Switzerland as a whole
+      const nx = x(CM.nat);
+      svg.append('line').attr('class', 'cm-natline').attr('x1', nx).attr('x2', nx).attr('y1', top - 6).attr('y2', stripY + stripH);
+      svg.append('text').attr('class', 'cm-natlabel').attr('x', Math.min(Math.max(nx, 62), W - 62)).attr('y', top - 10)
+        .attr('text-anchor', 'middle').text('Switzerland ' + f1(CM.nat) + '%');
     }
+
+    const hlDot = svg.append('circle').attr('class', 'cm-hl-dot').attr('r', r0 + 2.4).attr('visibility', 'hidden');
+    const hlLab = svg.append('text').attr('class', 'cm-hl-label').attr('dy', '0.32em').attr('visibility', 'hidden');
+    CM.rain = {
+      mark(id, show) {
+        const r = id != null ? CM.byId.get(id) : null, v = cmShare(r);
+        if (v == null) { hlDot.attr('visibility', 'hidden'); hlLab.attr('visibility', 'hidden'); tip.hide(); return; }
+        const cx = x(v), cy = ry(id), right = cx < W * 0.66;
+        hlDot.attr('cx', cx).attr('cy', cy).attr('visibility', 'visible');
+        hlLab.attr('x', cx + (right ? 8 : -8)).attr('y', cy).attr('text-anchor', right ? 'start' : 'end')
+          .text(plainName(r.name) + ' ' + f1(v) + '%').attr('visibility', 'visible');
+        if (show) tip.show(cmTip(r), cx, cy); else tip.hide();
+      },
+    };
+
+    const bandTip = (i) => '<p class="tt__title">' + bandLabel(i) + ' of votes against</p><dl class="tt__rows">' +
+      row('Communes', d3.format(',')(counts[i])) + row('Share of communes', f1((100 * counts[i]) / n) + '%') + '</dl>';
+    const boxTip = '<p class="tt__title">The typical commune</p><dl class="tt__rows">' +
+      row('Median', f1(q50) + '%') + row('Middle half', f1(q25) + '–' + f1(q75) + '%') + row('Middle 90%', f1(q05) + '–' + f1(q95) + '%') +
+      (CM.nat != null ? row('Switzerland as a whole', f1(CM.nat) + '%') : '') +
+      '</dl><p class="tt__out">Box: the middle half of communes. Whiskers: the middle 90%.</p>';
+    const del = d3.Delaunay.from(pts, (p) => x(p.v), (p) => ry(p.r.id));
+    svg.append('rect').attr('class', 'overlay').attr('x', 0).attr('y', top - 6).attr('width', W).attr('height', stripY + stripH - top + 6)
+      .attr('aria-hidden', 'true')
+      .on('pointermove pointerdown', (ev) => {
+        const [px, py] = d3.pointer(ev);
+        if (py >= rainY - 5 && py <= rainY + rainH + 5) {
+          const p = pts[del.find(px, py)];
+          if (p && Math.hypot(x(p.v) - px, ry(p.r.id) - py) <= 10) { CM.pinned = null; cmFocus(p.r.id, 'rain'); return; }
+        }
+        if (CM.pinned == null) cmFocus(null, 'rain');
+        if (py >= boxY - 4 && py <= boxY + boxH + 4 && px >= x(q05) - 6 && px <= x(q95) + 6) tip.show(boxTip, px, boxY);
+        else if (py < rainY - 5 || py > rainY + rainH + 5) tip.show(bandTip(cmBin(x.invert(px))), px, py);
+        else tip.hide();
+      })
+      .on('pointerleave', () => { tip.hide(); if (CM.pinned == null) cmFocus(null, 'rain'); });
+
+    const none = CM.rows.filter((r) => !r.has_results).length;
     const key = document.createElement('p');
     key.className = 'cm-key';
-    key.innerHTML = '<span><i class="cm-swatch cm-swatch--none"></i>No separate result</span>' +
-      '<span>Numbers above the bands: communes</span>';
+    key.innerHTML = (none ? '<span><i class="cm-swatch cm-swatch--none"></i>No separate result (' + none + ' communes)</span>' : '') +
+      '<span>Box: middle half of communes · whiskers: middle 90%</span>';
     el.appendChild(key);
+    if (CM.focus != null) CM.rain.mark(CM.focus, false);
   }
 
   function drawCommuneMap(el) {
@@ -1025,16 +1116,28 @@
       const box = ([lx, ly, a]) => ({ x0: a === 'start' ? lx : a === 'end' ? lx - tw : lx - tw / 2, x1: a === 'start' ? lx + tw : a === 'end' ? lx : lx + tw / 2, y0: ly - 7, y1: ly + 7 });
       const spot = spots.find((sp) => !hits(box(sp)) && box(sp).x0 >= 0 && box(sp).x1 <= W) || spots[0];
       boxes.push(box(spot));
-      lab.append('text').attr('x', spot[0]).attr('y', spot[1]).attr('dy', '0.32em').attr('text-anchor', spot[2]).text(name);
+      lab.append('text').attr('x', spot[0]).attr('y', spot[1]).attr('dy', '0.32em').attr('text-anchor', spot[2])
+        .attr('data-id', p.r.id).text(name);
     });
-    const ring = svg.append('circle').attr('class', 'focus-ring').attr('r', 6).attr('visibility', 'hidden');
+    const ring = svg.append('circle').attr('class', 'focus-ring').attr('r', 8).attr('visibility', 'hidden');
+    const hlDot = svg.append('circle').attr('class', 'cm-hl-dot').attr('r', 4.5).attr('visibility', 'hidden');
+    const hlLab = svg.append('text').attr('class', 'cm-hl-label').attr('dy', '0.32em').attr('visibility', 'hidden');
     const delaunay = d3.Delaunay.from(rows, (r) => x(r.income_median), (r) => y(cmShare(r)));
     CM.inc = {
-      mark(id, show, xy) {
+      mark(id, show) {
         const r = id != null ? CM.byId.get(id) : null;
-        if (!r || !r.income_median || cmShare(r) == null) { ring.attr('visibility', 'hidden'); tip.hide(); return; }
-        const cx = x(r.income_median), cy = y(cmShare(r));
+        lab.selectAll('text').attr('visibility', function () { return r && +this.getAttribute('data-id') === r.id ? 'hidden' : null; });
+        if (!r || !r.income_median || cmShare(r) == null) {
+          [ring, hlDot, hlLab].forEach((e) => e.attr('visibility', 'hidden'));
+          tip.hide();
+          return;
+        }
+        const cx = x(r.income_median), cy = y(cmShare(r)), right = cx < W * 0.66;
         ring.attr('cx', cx).attr('cy', cy).attr('visibility', 'visible');
+        hlDot.attr('cx', cx).attr('cy', cy).attr('visibility', 'visible');
+        hlLab.attr('x', cx + (right ? 12 : -12)).attr('y', cy).attr('text-anchor', right ? 'start' : 'end')
+          .text(plainName(r.name)).attr('visibility', show ? 'hidden' : 'visible');
+        if (show) lab.selectAll('text').attr('visibility', null);
         if (show) tip.show(cmTip(r), cx, cy); else tip.hide();
       },
     };
@@ -1044,10 +1147,10 @@
         const [px, py] = d3.pointer(ev);
         const r = rows[delaunay.find(px, py)];
         const near = r && Math.hypot(x(r.income_median) - px, y(cmShare(r)) - py) <= 20;
-        CM.pinned = null;
-        cmFocus(near ? r.id : null, 'income');
+        cmFocus(near ? r.id : CM.pinned, near ? 'income' : 'pinned');
       })
-      .on('pointerleave', () => cmFocus(null, 'income'));
+      .on('pointerleave', () => cmFocus(CM.pinned, 'income'));
+    if (CM.focus != null) CM.inc.mark(CM.focus, false);
   }
 
   function renderCommunes(rows, sum, topo) {
@@ -1083,25 +1186,47 @@
         (rc == null ? '' : ' Rank correlation ' + d3.format('+.2f')(-rc) + '. A correlation, not a cause: richer communes differ in many other ways too.');
     }
 
+    // Search: ignores accents, case and punctuation; knows English and German/French names of the
+    // cities; lists the options when a name is ambiguous (e.g. Kilchberg ZH and BL).
+    const fold = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[.'’()/,-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const ALIAS = { geneva: 'geneve', genf: 'geneve', lucerne: 'luzern', berne: 'bern', basle: 'basel', bale: 'basel',
+      'st gall': 'st gallen', 'saint gall': 'st gallen', sitten: 'sion', neuenburg: 'neuchatel', freiburg: 'fribourg',
+      biel: 'biel bienne', bienne: 'biel bienne', zurigo: 'zurich', ginevra: 'geneve' };
     const list = $('#cm-list');
-    const byName = new Map();
+    const folded = rows.map((r) => ({ r, f: fold(r.name) }));
     rows.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).forEach((r) => {
-      byName.set(r.name.toLocaleLowerCase('de'), r.id);
       list.appendChild(new Option(r.name + (r.name.includes('(') ? '' : ' (' + r.canton + ')'), r.name));
     });
     const find = $('#cm-find');
-    const lookup = (v) => {
-      const q = v.trim().toLocaleLowerCase('de');
-      if (!q) return null;
-      if (byName.has(q)) return byName.get(q);
-      const hits = rows.filter((r) => r.name.toLocaleLowerCase('de').startsWith(q));
-      return hits.length === 1 ? hits[0].id : null;
+    const lookup = (v, exactOnly) => {
+      let qv = fold(v);
+      if (!qv) return { ids: [] };
+      qv = ALIAS[qv] || qv;
+      let hits = folded.filter((o) => o.f === qv);
+      if (!hits.length) hits = folded.filter((o) => o.f.startsWith(qv + ' '));     // "kilchberg" -> Kilchberg (ZH), (BL)
+      if (!hits.length && !exactOnly) hits = folded.filter((o) => o.f.startsWith(qv));
+      if (exactOnly && hits.length !== 1) return { ids: [] };
+      return { ids: hits.map((o) => o.r.id) };
     };
-    find.addEventListener('change', () => { const id = lookup(find.value); CM.pinned = id; cmFocus(id, 'find'); });
-    find.addEventListener('input', () => { const id = byName.get(find.value.trim().toLocaleLowerCase('de')); if (id != null) { CM.pinned = id; cmFocus(id, 'find'); } });
-    find.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { find.value = ''; CM.pinned = null; cmFocus(null, 'find'); $('#cm-status').textContent = 'Hover or tap a commune for details.'; } });
+    const pick = (v, exactOnly) => {
+      const { ids } = lookup(v, exactOnly);
+      if (ids.length === 1) { CM.pinned = ids[0]; cmFocus(ids[0], 'find'); return; }
+      if (exactOnly) return;
+      CM.pinned = null;
+      cmFocus(null, 'find');
+      const names = ids.slice(0, 6).map((id) => CM.byId.get(id).name);
+      $('#cm-status').textContent = !ids.length ? 'No commune of that name.'
+        : ids.length + ' communes match: ' + names.join(', ') + (ids.length > 6 ? ', …' : '') + '. Type more of the name or pick one from the list.';
+    };
+    find.addEventListener('change', () => pick(find.value, false));
+    find.addEventListener('input', () => pick(find.value, true));
+    find.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') pick(find.value, false);
+      if (ev.key === 'Escape') { find.value = ''; CM.pinned = null; cmFocus(null, 'find'); $('#cm-status').textContent = 'Hover or tap a commune for details.'; }
+    });
 
-    onWidth($('#cm-legend'), () => drawCmLegend($('#cm-legend')));
+    onWidth($('#cm-legend'), () => drawRaincloud($('#cm-legend')));
     CM.redrawMap = onWidth($('#chart-communes'), () => drawCommuneMap($('#chart-communes')));
     onWidth($('#chart-income'), () => drawIncome($('#chart-income')));
   }
