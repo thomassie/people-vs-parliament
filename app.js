@@ -303,7 +303,7 @@
     el.querySelectorAll('svg').forEach((n) => n.remove());
     const tip = el._tip || (el._tip = tooltip(el));
     tip.hide();
-    const H = 280, m = { t: 30, r: 4, b: 30, l: 34 };
+    const H = 280, m = { t: 30, r: 12, b: 30, l: 34 };   // r: room for the last centred labels on phones
     const rows = decades.slice().sort((a, b) => a.decade - b.decade);
     const x = d3.scaleBand().domain(rows.map((d) => d.decade)).range([m.l, W - m.r]).paddingInner(0.3).paddingOuter(0.1);
     const yMax = Math.max(10, Math.ceil(d3.max(rows, (d) => d.pct_against_nr) / 10) * 10);
@@ -390,7 +390,7 @@
     el.querySelectorAll('svg').forEach((n) => n.remove());
     const tip = el._tip || (el._tip = tooltip(el));
     tip.hide();
-    const m = { t: 30, r: 12, b: 46, l: 40 };
+    const m = { t: 30, r: 18, b: 46, l: 40 };   // r: room for the centred "100%" tick label
     // square plot (both axes 0-100%, so the diagonal stays at 45 degrees) as wide as the column
     const side = Math.max(220, Math.min(W - m.l - m.r, 900));
     const H = side + m.t + m.b;
