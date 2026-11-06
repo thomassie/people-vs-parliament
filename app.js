@@ -391,7 +391,8 @@
     const tip = el._tip || (el._tip = tooltip(el));
     tip.hide();
     const m = { t: 30, r: 12, b: 46, l: 40 };
-    const side = Math.max(220, Math.min(W - m.l - m.r, 560));
+    // square plot (both axes 0-100%, so the diagonal stays at 45 degrees) as wide as the column
+    const side = Math.max(220, Math.min(W - m.l - m.r, 900));
     const H = side + m.t + m.b;
     const x = d3.scaleLinear().domain([0, 100]).range([m.l, m.l + side]);
     const y = d3.scaleLinear().domain([0, 100]).range([m.t + side, m.t]);
