@@ -109,6 +109,8 @@
 .pvp .block__rail h2 { font-size: var(--step-2); }
 .pvp .block__rail p { color: var(--muted); max-width: 26rem; }
 .pvp .block__body { display: grid; gap: 1.25rem; min-width: 0; align-content: start; }
+/* children may shrink: a wide table then scrolls inside its frame instead of widening the column */
+.pvp .block__body > * { min-width: 0; }
 .pvp .note { font-family: var(--font-support); font-size: var(--step--1); color: var(--muted); }
 /* ---------- Charts ---------- */
 .pvp .chart { position: relative; width: 100%; min-width: 0; }
