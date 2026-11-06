@@ -338,6 +338,17 @@
 .pvp .cm-box line { stroke: var(--ink); stroke-width: 1px; }
 .pvp .cm-box .cm-box-median { stroke-width: 2.5px; }
 .pvp .cm-rain-dots circle { fill: var(--muted); fill-opacity: 0.45; }
+/* A selected band: its communes keep their colour, the rest steps back */
+.pvp #pvp-chart-communes .cm-c.cm-out { fill: var(--muted); fill-opacity: 0.12; }
+.pvp .cm-band.cm-unsel { fill: var(--muted); fill-opacity: 0.14; }
+.pvp .cm-strip rect { cursor: pointer; }
+.pvp .cm-strip rect:focus { outline: none; }
+.pvp .cm-strip rect:focus-visible { stroke: var(--link); stroke-width: 2px; }
+.pvp .cm-rain-overlay { cursor: pointer; }
+.pvp .cm-rain-dots circle.cm-in { fill: var(--red); fill-opacity: 0.9; }
+.pvp .cm-rain-dots circle.cm-out { fill-opacity: 0.12; }
+.pvp .cm-bubble.cm-in { fill: var(--red); fill-opacity: 0.32; stroke: var(--red); stroke-opacity: 0.85; }
+.pvp .cm-bubble.cm-out { fill-opacity: 0.05; stroke-opacity: 0.18; }
 .pvp .cm-natline { stroke: var(--ink); stroke-opacity: 0.75; stroke-dasharray: 3 3; pointer-events: none; }
 /* the commune in focus, in the raincloud and the scatter */
 .pvp .cm-hl-dot { fill: var(--red); stroke: var(--ink); stroke-width: 1.5px; pointer-events: none; }

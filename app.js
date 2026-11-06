@@ -824,7 +824,7 @@
   // data/communes.json: one row per commune polygon (today's communes); data/commune_summary.json:
   // reference figures; data/communes.topo.json: BFS generalised boundaries in LV95 metres, decoded
   // below (no extra library). Loaded only when the section comes near the screen.
-  const CM = { rows: [], byId: new Map(), featById: new Map(), sum: null, nat: null, sorted: [], pinned: null, focus: null };
+  const CM = { rows: [], byId: new Map(), featById: new Map(), sum: null, nat: null, sorted: [], pinned: null, focus: null, band: null };
   const CM_THRESH = [15, 20, 25, 30, 35, 40];   // share of votes against the National Council, %
   const CM_CITIES = [261, 6621, 2701, 5586, 351, 230, 5192, 1061, 3203];   // Zurich, Geneva, Basel, Lausanne, Bern, Winterthur, Lugano, Lucerne, St. Gallen
   const cmShare = (r) => (r && r.n ? (100 * r.against) / r.n : null);
@@ -908,6 +908,30 @@
   const bandLabel = (i) => (i === 0 ? 'Under ' + CM_THRESH[0] + '%' : i === CM_THRESH.length ? CM_THRESH[i - 1] + '% or more'
     : CM_THRESH[i - 1] + '–' + CM_THRESH[i] + '%');
 
+  // One band selected (click in the raincloud): its communes keep their colour on the map and are
+  // marked in the rain and the bubble chart; everything else steps back.
+  function cmApplyBand() {
+    const b = CM.band;
+    const inBand = (r) => cmShare(r) != null && cmBin(cmShare(r)) === b;
+    const mark = (sel, rowOf) => d3.select(root).selectAll(sel)
+      .classed('cm-in', (d) => b != null && inBand(rowOf(d)))
+      .classed('cm-out', (d) => b != null && !inBand(rowOf(d)));
+    mark('#pvp-chart-communes path.cm-c', (f) => CM.byId.get(f.id));
+    mark('#pvp-cm-legend .cm-rain-dots circle', (p) => p.r);
+    mark('#pvp-chart-income circle.cm-bubble', (r) => r);
+    d3.select(root).selectAll('#pvp-cm-legend rect.cm-band')
+      .classed('cm-sel', (i) => b != null && i === b).classed('cm-unsel', (i) => b != null && i !== b);
+    d3.select(root).selectAll('#pvp-cm-legend .cm-strip rect').attr('aria-pressed', (i) => String(i === b));
+  }
+  function cmSetBand(i) {
+    CM.band = i == null || CM.band === i ? null : i;
+    cmApplyBand();
+    const n = CM.band == null ? 0 : CM.sorted.filter((v) => cmBin(v) === CM.band).length;
+    $('#cm-status').textContent = CM.band == null ? 'Hover or tap a commune for details.'
+      : d3.format(',')(n) + ' communes went against the National Council in ' + bandLabel(CM.band).replace('Under', 'under') +
+        ' of votes, highlighted on the map, in the dots above and in the bubble chart. Click the band again or press Escape to show all.';
+  }
+
   // Raincloud: how the communes spread along the share of votes against the National Council.
   // Cloud = density, filled with the map's bands so it doubles as the colour key; box = median and
   // middle half, whiskers = middle 90%; rain = one dot per commune. The axis is linear in percent.
@@ -939,7 +963,7 @@
     vals.forEach((v) => { counts[cmBin(v)] += 1; });
 
     const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
-      .attr('role', 'img')
+      .attr('role', 'group')
       .attr('aria-label', 'Distribution of ' + d3.format(',')(n) + ' communes by share of votes against the National Council: median ' +
         f1(q50) + '%, middle half ' + f1(q25) + ' to ' + f1(q75) + '%' + (CM.nat != null ? '; Switzerland as a whole ' + f1(CM.nat) + '%.' : '.'));
     svg.append('clipPath').attr('id', 'pvp-cm-cloud').append('path')
@@ -963,7 +987,12 @@
     svg.append('g').attr('class', 'cm-rain-dots').selectAll('circle').data(pts).join('circle')
       .attr('cx', (p) => x(p.v)).attr('cy', (p) => ry(p.r.id)).attr('r', r0);
 
-    svg.append('g').call(band(stripY, stripH));
+    svg.append('g').attr('class', 'cm-strip').call(band(stripY, stripH)).selectAll('rect')
+      .attr('tabindex', 0).attr('role', 'button').attr('aria-pressed', 'false')
+      .attr('aria-label', (i) => bandLabel(i) + ' of votes against: ' + d3.format(',')(counts[i]) + ' communes. Highlight them on the map.')
+      .on('keydown', (ev, i) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); cmSetBand(i); } })
+      .on('focus', (ev, i) => tip.show(bandTip(i), x((bands[i] + bands[i + 1]) / 2), stripY))
+      .on('blur', () => tip.hide());
     const ticks = [0, ...CM_THRESH, 50].filter((t) => t <= max);
     svg.append('g').selectAll('text').data(ticks).join('text')
       .attr('x', (t) => x(t)).attr('y', stripY + stripH + 14).attr('text-anchor', (t) => (t === 0 ? 'start' : 'middle'))
@@ -991,14 +1020,20 @@
     };
 
     const bandTip = (i) => '<p class="tt__title">' + bandLabel(i) + ' of votes against</p><dl class="tt__rows">' +
-      row('Communes', d3.format(',')(counts[i])) + row('Share of communes', f1((100 * counts[i]) / n) + '%') + '</dl>';
+      row('Communes', d3.format(',')(counts[i])) + row('Share of communes', f1((100 * counts[i]) / n) + '%') + '</dl>' +
+      '<p class="tt__hint">' + (CM.band === i ? 'Click again to show all communes.' : 'Click to highlight these communes on the map.') + '</p>';
     const boxTip = '<p class="tt__title">The typical commune</p><dl class="tt__rows">' +
       row('Median', f1(q50) + '%') + row('Middle half', f1(q25) + '–' + f1(q75) + '%') + row('Middle 90%', f1(q05) + '–' + f1(q95) + '%') +
       (CM.nat != null ? row('Switzerland as a whole', f1(CM.nat) + '%') : '') +
       '</dl><p class="tt__out">Box: the middle half of communes. Whiskers: the middle 90%.</p>';
     const del = d3.Delaunay.from(pts, (p) => x(p.v), (p) => ry(p.r.id));
-    svg.append('rect').attr('class', 'overlay').attr('x', 0).attr('y', top - 6).attr('width', W).attr('height', stripY + stripH - top + 6)
+    const inBandArea = (py) => (py >= top - 6 && py < boxY - 4) || py > rainY + rainH + 5;   // cloud or colour strip
+    svg.append('rect').attr('class', 'overlay cm-rain-overlay').attr('x', 0).attr('y', top - 6).attr('width', W).attr('height', stripY + stripH + 16 - top + 6)
       .attr('aria-hidden', 'true')
+      .on('click', (ev) => {
+        const [px, py] = d3.pointer(ev);
+        if (inBandArea(py)) { cmSetBand(cmBin(x.invert(px))); tip.show(bandTip(cmBin(x.invert(px))), px, py); }
+      })
       .on('pointermove pointerdown', (ev) => {
         const [px, py] = d3.pointer(ev);
         if (py >= rainY - 5 && py <= rainY + rainH + 5) {
@@ -1007,7 +1042,7 @@
         }
         if (CM.pinned == null) cmFocus(null, 'rain');
         if (py >= boxY - 4 && py <= boxY + boxH + 4 && px >= x(q05) - 6 && px <= x(q95) + 6) tip.show(boxTip, px, boxY);
-        else if (py < rainY - 5 || py > rainY + rainH + 5) tip.show(bandTip(cmBin(x.invert(px))), px, py);
+        else if (inBandArea(py)) tip.show(bandTip(cmBin(x.invert(px))), px, py);
         else tip.hide();
       })
       .on('pointerleave', () => { tip.hide(); if (CM.pinned == null) cmFocus(null, 'rain'); });
@@ -1019,6 +1054,7 @@
       '<span>Box: middle half of communes · whiskers: middle 90%</span>';
     el.appendChild(key);
     if (CM.focus != null) CM.rain.mark(CM.focus, false);
+    cmApplyBand();
   }
 
   function drawCommuneMap(el) {
@@ -1081,6 +1117,7 @@
         cmFocus(CM.pinned == null ? null : f.id, 'map', d3.pointer(ev, el));
       });
     if (CM.pinned != null) cmFocus(CM.pinned, 'map');
+    cmApplyBand();
   }
 
   function drawIncome(el) {
@@ -1204,6 +1241,7 @@
       })
       .on('pointerleave', () => cmFocus(CM.pinned, 'income'));
     if (CM.focus != null) CM.inc.mark(CM.focus, false);
+    cmApplyBand();
   }
 
   function cmIncomeText() {
@@ -1314,6 +1352,7 @@
       if (ev.key === 'Escape') { find.value = ''; CM.pinned = null; cmFocus(null, 'find'); $('#cm-status').textContent = 'Hover or tap a commune for details.'; }
     });
 
+    $('#communes').addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && CM.band != null) cmSetBand(null); });
     onWidth($('#cm-legend'), () => drawRaincloud($('#cm-legend')));
     CM.redrawMap = onWidth($('#chart-communes'), () => drawCommuneMap($('#chart-communes')));
     CM.redrawIncome = onWidth($('#chart-income'), () => drawIncome($('#chart-income')));
