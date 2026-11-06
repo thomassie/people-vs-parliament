@@ -904,7 +904,6 @@
   }
 
   const plainName = (n) => n.replace(/\s*\(.*\)$/, '').replace(/^Genève$/, 'Geneva').replace(/^Zürich$/, 'Zurich').replace(/^Luzern$/, 'Lucerne');
-  const jitter = (id) => { const v = Math.sin(id * 12.9898) * 43758.5453; return v - Math.floor(v); };   // stable per commune
   const bandLabel = (i) => (i === 0 ? 'Under ' + CM_THRESH[0] + '%' : i === CM_THRESH.length ? CM_THRESH[i - 1] + '% or more'
     : CM_THRESH[i - 1] + '–' + CM_THRESH[i] + '%');
 
@@ -934,7 +933,8 @@
 
   // Raincloud: how the communes spread along the share of votes against the National Council.
   // Cloud = density, filled with the map's bands so it doubles as the colour key; box = median and
-  // middle half, whiskers = middle 90%; rain = one dot per commune. The axis is linear in percent.
+  // middle half, whiskers = middle 90%; rain = one dot per commune, as an upside-down dot plot.
+  // The axis is linear in percent.
   function drawRaincloud(el) {
     const W = Math.round(el.clientWidth);
     if (!W) return;
@@ -946,7 +946,7 @@
     const max = Math.max(55, Math.ceil(d3.max(vals) / 5) * 5);
     const x = d3.scaleLinear().domain([0, max]).range([6, W - 6]);
     const top = 24, cloudH = small ? 46 : 60, boxY = top + cloudH + 9, boxH = 9;
-    const rainY = boxY + boxH + 10, rainH = small ? 26 : 34, stripY = rainY + rainH + 9, stripH = 8, H = stripY + stripH + 20;
+    const rainY = boxY + boxH + 10, rainH = small ? 60 : 80, stripY = rainY + rainH + 9, stripH = 8, H = stripY + stripH + 20;
     const q = (p) => d3.quantileSorted(vals, p);
     const [q05, q25, q50, q75, q95] = [q(0.05), q(0.25), q(0.5), q(0.75), q(0.95)];
 
@@ -982,8 +982,17 @@
     gb.append('rect').attr('x', x(q25)).attr('width', x(q75) - x(q25)).attr('y', boxY).attr('height', boxH);
     gb.append('line').attr('class', 'cm-box-median').attr('x1', x(q50)).attr('x2', x(q50)).attr('y1', boxY - 2).attr('y2', boxY + boxH + 2);
 
-    const r0 = small ? 1.3 : 1.6;
-    const ry = (id) => rainY + jitter(id) * rainH;
+    // Rain: communes with the same share form one column hanging from the top, the most populous
+    // first. The step between dots shrinks until the longest column fits, so dots may overlap and
+    // a column's length counts its communes.
+    const r0 = small ? 1.3 : 1.8;
+    const cols = d3.group(pts, (p) => p.v.toFixed(4));
+    const longest = d3.max(cols.values(), (c) => c.length) || 1;
+    const step = Math.min(2 * r0 + 1, (rainH - 2 * r0) / Math.max(1, longest - 1));
+    const yOf = new Map();
+    cols.forEach((c) => c.sort((a, b) => (b.r.pop || 0) - (a.r.pop || 0) || d3.ascending(a.r.name, b.r.name))
+      .forEach((p, k) => yOf.set(p.r.id, rainY + r0 + k * step)));
+    const ry = (id) => yOf.get(id);
     svg.append('g').attr('class', 'cm-rain-dots').selectAll('circle').data(pts).join('circle')
       .attr('cx', (p) => x(p.v)).attr('cy', (p) => ry(p.r.id)).attr('r', r0);
 
@@ -1051,7 +1060,8 @@
     const key = document.createElement('p');
     key.className = 'cm-key';
     key.innerHTML = (none ? '<span><i class="cm-swatch cm-swatch--none"></i>No separate result (' + none + ' communes)</span>' : '') +
-      '<span>Box: middle half of communes · whiskers: middle 90%</span>';
+      '<span>Box: middle half of communes · whiskers: middle 90%</span>' +
+      '<span>Dots hang in columns: the longer the column, the more communes</span>';
     el.appendChild(key);
     if (CM.focus != null) CM.rain.mark(CM.focus, false);
     cmApplyBand();

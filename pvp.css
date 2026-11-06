@@ -161,12 +161,18 @@
 .pvp .key--circle { border-radius: 50%; background: var(--blue); }
 .pvp .key--circle.against { background: var(--red); }
 /* ---------- Filters & legend ---------- */
-.pvp .filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
+.pvp .filters { display: grid; gap: 0.5rem; }
 /* Switches ("bar index"): plain labels on a thin rule, a thick ink bar under the selected one.
-   Ink and paper only, so they never borrow the charts' colours or shapes. The bars are inset
-   shadows, so a wrapped row keeps its own rule and nothing shifts when the selection moves
-   (Google Sans Code keeps its width at weight 500). */
-.pvp .seg { display: inline-flex; flex-wrap: wrap; }
+   Ink and paper only, so they never borrow the charts' colours or shapes. The rule runs the full
+   width of the column: a background repeating every 44px (the buttons' fixed height), so each
+   wrapped row on a phone gets its own full-width rule too. The bars are inset shadows, so nothing
+   shifts when the selection moves (Google Sans Code keeps its width at weight 500). */
+.pvp .seg {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  background: repeating-linear-gradient(to bottom, transparent 0 43px, var(--rule) 43px 44px);
+}
 .pvp .seg button {
   font: inherit;
   font-family: var(--font-support);
@@ -179,9 +185,9 @@
   margin: 0;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  height: 44px;
   padding: 0 0.875rem;
-  box-shadow: inset 0 -1px 0 var(--rule);
+  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -189,6 +195,7 @@
 .pvp .seg button[aria-pressed="true"] { color: var(--ink); font-weight: 500; box-shadow: inset 0 -4px 0 var(--ink); }
 .pvp .seg button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 @media (forced-colors: active) {
+  .pvp .seg { background: none; }
   .pvp .seg button { border-bottom: 1px solid CanvasText; box-shadow: none; }
   .pvp .seg button[aria-pressed="true"] { border-bottom-width: 4px; }
 }
