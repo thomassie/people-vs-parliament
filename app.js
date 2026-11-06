@@ -865,7 +865,7 @@
         (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>';
     }
     html += '<dl class="tt__rows">' + (r.pop ? row('Residents', d3.format(',')(r.pop)) : '') +
-      row('Median taxable income', r.income_median ? chf(r.income_median) : 'too few returns') + '</dl>';
+      row('Median taxable income per tax return', r.income_median ? chf(r.income_median) : 'too few returns') + '</dl>';
     if (share != null) html += '<p class="tt__out">More often against parliament than ' + cmRank(share) + '% of communes.</p>';
     return html;
   }
@@ -875,7 +875,7 @@
     return r.name + ' (' + r.canton + '): ' + (share == null ? 'no separate result.'
       : r.against + ' of ' + r.n + ' votes against the National Council (' + f1(share) + '%), more often than ' + cmRank(share) + '% of communes.') +
       (r.pop ? ' ' + d3.format(',')(r.pop) + ' residents.' : '') +
-      (r.income_median ? ' Median taxable income ' + chf(r.income_median) + '.' : '');
+      (r.income_median ? ' Median taxable income per tax return ' + chf(r.income_median) + '.' : '');
   }
 
   function cmFocus(id, source, xy) {
