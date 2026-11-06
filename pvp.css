@@ -234,7 +234,7 @@
 .pvp .split__meta { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
 .pvp .split__title { font-weight: 500; }
 /* ---------- Upcoming ---------- */
-.pvp .upcoming { display: grid; gap: 1.5rem; }
+.pvp .upcoming { display: grid; gap: 4.5rem; }
 .pvp .day { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.25rem; align-items: start; }
 .pvp .day__date {
   width: 84px; height: 84px; border-radius: 50%;
@@ -244,7 +244,7 @@
 }
 .pvp .day__date b { display: block; font-size: 1.75rem; font-weight: 500; }
 .pvp .day__date span { font-size: 0.8125rem; }
-.pvp .day__items { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; min-width: 0; }
+.pvp .day__items { list-style: none; margin: 0; padding: 0; display: grid; gap: 3rem; min-width: 0; }
 .pvp .day__items li { display: grid; gap: 0.2rem; }
 .pvp .day__items .form { font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
 .pvp .day__items .nr { font-family: var(--font-support); font-size: 0.8125rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.45rem; }

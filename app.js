@@ -1205,7 +1205,7 @@
       : x.ticks(W < 480 ? 4 : 7);
     svg.append('g').selectAll('text').data(xt).join('text')
       .attr('x', (d) => x(d)).attr('y', H - m.b + 18).attr('text-anchor', 'middle').text(M.tick);
-    if (M.log) g.selectAll('line.v').data(xt).join('line').attr('class', 'v')
+    g.selectAll('line.v').data(xt).join('line').attr('class', 'v')
       .attr('y1', m.t).attr('y2', H - m.b).attr('x1', (d) => Math.round(x(d)) + 0.5).attr('x2', (d) => Math.round(x(d)) + 0.5);
     svg.append('text').attr('class', 'axis-title').attr('x', W - m.r).attr('y', H - m.b + 38).attr('text-anchor', 'end').text(W < 480 ? M.axisShort : M.axis);
     svg.append('text').attr('class', 'axis-title').attr('x', m.l).attr('y', m.t - 14).text('↑ Votes against the National Council');
