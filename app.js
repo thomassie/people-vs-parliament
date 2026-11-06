@@ -876,7 +876,7 @@
         : 'Its votes are counted together with a neighbouring commune, so there is no separate result.') + '</p>';
     } else {
       html += '<dl class="tt__rows">' + row('Against the National Council', r.against + ' of ' + r.n + ' (' + f1(share) + '%)') +
-        (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>';
+        (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>' + cmDecades(r);
     }
     html += '<dl class="tt__rows">' + (r.pop ? row('Residents', d3.format(',')(r.pop)) : '') +
       (r.voters ? row('Voters per vote', d3.format(',')(r.voters)) : '') +
@@ -884,6 +884,37 @@
       (r.tax_pc != null ? row('Federal tax per resident', 'CHF ' + d3.format(',')(r.tax_pc)) : '') + '</dl>';
     if (share != null) html += '<p class="tt__out">More often against parliament than ' + cmRank(share) + '% of communes.</p>';
     return html;
+  }
+
+  // Small column chart for the tooltip: the commune's share of votes against the National Council
+  // by decade (red columns, as in "Decade by decade"), Switzerland over the same votes as a dark tick.
+  // Commune results start in 1981; a decade without the commune's own result stays empty.
+  function cmDecades(r) {
+    const ref = CM.sum && CM.sum.decades;
+    if (!ref || !r.dec || r.dec.length !== ref.length) return '';
+    const pct = (n, a) => (n ? (100 * a) / n : null);
+    const vals = r.dec.map(([n, a]) => pct(n, a));
+    const nat = ref.map((d) => pct(d.proposals, d.proposals_against_nr));
+    const W = 284, top = 16, base = 84, H = base + 16;
+    const max = Math.max(50, Math.ceil(d3.max([...vals, ...nat]) / 10) * 10);
+    const x = d3.scaleBand().domain(d3.range(ref.length)).range([0, W]).paddingInner(0.38).paddingOuter(0.12);
+    const y = d3.scaleLinear().domain([0, max]).range([base, top]);
+    const bw = x.bandwidth();
+    let g = '<line class="tt__dec-base" x1="0" x2="' + W + '" y1="' + base + '" y2="' + base + '"></line>';
+    ref.forEach((d, i) => {
+      const x0 = x(i), v = vals[i], s = nat[i], cx = x0 + bw / 2;
+      if (v != null) g += '<path class="tt__dec-bar" d="' + colPath(x0, bw, y(v), base, 3) + '"></path>';
+      if (s != null) g += '<line class="tt__dec-nat" x1="' + (x0 - 4) + '" x2="' + (x0 + bw + 4) + '" y1="' + y(s) + '" y2="' + y(s) + '"></line>';
+      const ly = Math.min(v != null ? y(v) : base, s != null ? y(s) : base) - 5;
+      g += '<text class="tt__dec-val" x="' + cx + '" y="' + ly + '">' + (v != null ? f1(v) : '–') + '</text>' +
+        '<text class="tt__dec-lab" x="' + cx + '" y="' + (base + 13) + '">' + d.decade + 's</text>';
+    });
+    const label = 'Share of votes against the National Council by decade: ' + ref.map((d, i) => d.decade + 's ' +
+      (vals[i] != null ? f1(vals[i]) + '%' : 'no own result') + (nat[i] != null ? ' (Switzerland ' + f1(nat[i]) + '%)' : '')).join(', ') + '.';
+    return '<div class="tt__dec"><p class="tt__dec-head">By decade, % of votes against</p>' +
+      '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label) + '">' + g + '</svg>' +
+      '<p class="tt__dec-key"><span><i class="tt__dec-sw"></i>' + esc(r.name) + '</span><span><i class="tt__dec-tick"></i>Switzerland</span>' +
+      (CM.sum.decades_from ? '<span>since ' + d3.utcFormat('%b %Y')(parseDate(CM.sum.decades_from)) + '</span>' : '') + '</p></div>';
   }
 
   function cmStatus(r) {
