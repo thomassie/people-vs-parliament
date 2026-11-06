@@ -1203,11 +1203,13 @@
         kx += 2 * rk + 5 + d3.format(',')(k).length * 6.4 + 14;
       });
     }
-    // trend: median share in each tenth of communes by income
+    // trend: communes cut into ten equal groups along the horizontal axis; each point sits at the
+    // group's median income (skewed, so the median) and its mean share of votes against (shares are
+    // counts out of ~92, so a median would snap to those steps and draw false stairs)
     const byIncome = rows.slice().sort((a, b) => xv(a) - xv(b));
     const trend = d3.range(10).map((k) => {
       const part = byIncome.slice(Math.floor((k * byIncome.length) / 10), Math.floor(((k + 1) * byIncome.length) / 10));
-      return [d3.median(part, xv), d3.median(part, cmShare)];
+      return [d3.median(part, xv), d3.mean(part, cmShare)];
     });
     svg.append('path').attr('class', 'cm-trend').attr('d', d3.line().x((d) => x(d[0])).y((d) => y(d[1])).curve(d3.curveMonotoneX)(trend));
     // label the largest cities: first free spot right, left, above or below the dot
@@ -1287,7 +1289,8 @@
         ', estimated from the Federal Tax Administration’s income classes (communes with very few returns left out). Tax statistics leave out international civil servants and most foreign residents taxed at source, which matters most in Geneva.';
     $('#cm-income-note').textContent = source +
       (sum.population_year ? ' Bubbles: permanent residents at the end of ' + sum.population_year + '; size is compressed (area grows with the square root of residents) so small communes stay visible.' : '') +
-      ' Line: the typical commune in each tenth along the horizontal axis.' +
+      ' Line: communes cut into ten equal groups along the horizontal axis; each point is a group’s average share of votes against, at its median ' +
+      (cmMeasure === 'tax' ? 'tax per resident.' : 'income.') +
       (rc == null ? '' : ' Rank correlation ' + d3.format('+.2f')(-rc) + '. A correlation, not a cause: richer communes differ in many other ways too.');
   }
 
