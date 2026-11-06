@@ -108,6 +108,7 @@
       <div class="chart cm-map" id="pvp-chart-communes"><p class="note">Loading the commune map&hellip;</p></div>
       <p class="note" id="pvp-cm-status" aria-live="polite">Hover or tap a commune for details.</p>
       <h3 class="cm-sub" id="pvp-h-income">Income and voting against parliament</h3>
+      <div class="seg" role="group" aria-label="Income measure" id="pvp-cm-measure" hidden></div>
       <p class="cm-lede" id="pvp-cm-income-lede"></p>
       <div class="chart" id="pvp-chart-income"></div>
       <p class="note" id="pvp-cm-income-note"></p>
@@ -830,6 +831,18 @@
   const cmBin = (v) => d3.bisectRight(CM_THRESH, v);
   const chf = (v) => 'CHF ' + d3.format(',')(Math.round(v / 100) * 100);
   const fmtMonth = d3.utcFormat('%B %Y');
+  // Two views of income for the bubble chart, both from the same ESTV source and tax year:
+  // the typical return (median), and where top earners live (federal tax per resident).
+  const MEASURES = {
+    median: { key: 'income_median', button: 'Median income per tax return', log: false, corr: 'income_alignment_rank_corr',
+      axis: 'Median taxable income per tax return, CHF →', axisShort: 'Median income per tax return, CHF →',
+      tick: (v) => d3.format(',')(v / 1000) + 'k' },
+    tax: { key: 'tax_pc', button: 'Federal tax per resident', log: true, corr: 'tax_alignment_rank_corr',
+      axis: 'Direct federal tax per resident, CHF, log scale →', axisShort: 'Federal tax per resident, CHF, log →', tick: (v) => (v >= 1000 ? d3.format(',')(v / 1000) + 'k' : String(v)) },
+  };
+  let cmMeasure = 'median';
+  try { const v = localStorage.getItem('pvp-cm-measure'); if (MEASURES[v]) cmMeasure = v; } catch (e) { /* storage unavailable */ }
+  const xv = (r) => (r ? r[MEASURES[cmMeasure].key] : null);
 
   function topoDecode(topo) {
     const t = topo.transform;
@@ -865,7 +878,8 @@
         (CM.nat != null ? row('vs Switzerland', signed(share - CM.nat, 1)) : '') + '</dl>';
     }
     html += '<dl class="tt__rows">' + (r.pop ? row('Residents', d3.format(',')(r.pop)) : '') +
-      row('Median taxable income per tax return', r.income_median ? chf(r.income_median) : 'too few returns') + '</dl>';
+      row('Median taxable income per tax return', r.income_median ? chf(r.income_median) : 'too few returns') +
+      (r.tax_pc != null ? row('Federal tax per resident', 'CHF ' + d3.format(',')(r.tax_pc)) : '') + '</dl>';
     if (share != null) html += '<p class="tt__out">More often against parliament than ' + cmRank(share) + '% of communes.</p>';
     return html;
   }
@@ -875,7 +889,8 @@
     return r.name + ' (' + r.canton + '): ' + (share == null ? 'no separate result.'
       : r.against + ' of ' + r.n + ' votes against the National Council (' + f1(share) + '%), more often than ' + cmRank(share) + '% of communes.') +
       (r.pop ? ' ' + d3.format(',')(r.pop) + ' residents.' : '') +
-      (r.income_median ? ' Median taxable income per tax return ' + chf(r.income_median) + '.' : '');
+      (r.income_median ? ' Median taxable income per tax return ' + chf(r.income_median) + '.' : '') +
+      (r.tax_pc != null ? ' Federal tax per resident CHF ' + d3.format(',')(r.tax_pc) + '.' : '');
   }
 
   function cmFocus(id, source, xy) {
@@ -1074,11 +1089,17 @@
     el.querySelectorAll('svg').forEach((x) => x.remove());
     const tip = el._tip || (el._tip = tooltip(el));
     tip.hide();
-    const rows = CM.rows.filter((r) => r.income_median && cmShare(r) != null);
+    const M = MEASURES[cmMeasure];
+    const rows = CM.rows.filter((r) => xv(r) != null && xv(r) > 0 && cmShare(r) != null);
     const keyH = rows.some((r) => r.pop) ? (W < 480 ? 24 : 32) : 0;   // row for the bubble-size key
     const m = { t: 30 + keyH, r: 16, b: 46, l: 42 };
     const H = Math.round(Math.max(260, Math.min(440, W * 0.6))) + keyH;
-    const x = d3.scaleLinear().domain(d3.extent(rows, (r) => r.income_median)).nice().range([m.l, W - m.r]);
+    // log axis: round the ends to 1-2-5 steps (100 ... 20,000) instead of whole powers of ten
+    const step125 = (v, up) => { const p = 10 ** Math.floor(Math.log10(v)); const k = [1, 2, 5, 10].map((f) => f * p);
+      return up ? k.find((t) => t >= v) : k.slice().reverse().find((t) => t <= v); };
+    const [lo, hi] = d3.extent(rows, xv);
+    const x = M.log ? d3.scaleLog().domain([step125(lo, false), step125(hi, true)]).range([m.l, W - m.r])
+      : d3.scaleLinear().domain([lo, hi]).nice().range([m.l, W - m.r]);
     const y = d3.scaleLinear().domain([0, Math.max(50, Math.ceil(d3.max(rows, cmShare) / 10) * 10)]).range([H - m.b, m.t]);
     const svg = d3.select(el).insert('svg', ':first-child').attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H);
     const g = svg.append('g').attr('class', 'grid');
@@ -1086,11 +1107,13 @@
       .attr('x1', m.l).attr('x2', W - m.r).attr('y1', (d) => Math.round(y(d)) + 0.5).attr('y2', (d) => Math.round(y(d)) + 0.5);
     svg.append('g').selectAll('text').data(y.ticks(5)).join('text')
       .attr('x', m.l - 8).attr('y', (d) => y(d)).attr('dy', '0.32em').attr('text-anchor', 'end').text((d) => d + '%');
-    const xt = x.ticks(W < 480 ? 4 : 7);
+    const xt = M.log ? [100, 200, 500, 1000, 2000, 5000, 10000, 20000].filter((t) => t >= x.domain()[0] && t <= x.domain()[1] && (W >= 480 || [100, 1000, 10000].includes(t)))
+      : x.ticks(W < 480 ? 4 : 7);
     svg.append('g').selectAll('text').data(xt).join('text')
-      .attr('x', (d) => x(d)).attr('y', H - m.b + 18).attr('text-anchor', 'middle').text((d) => d3.format(',')(d / 1000) + 'k');
-    svg.append('text').attr('class', 'axis-title').attr('x', W - m.r).attr('y', H - m.b + 38).attr('text-anchor', 'end')
-      .text('Median taxable income per return, CHF →');
+      .attr('x', (d) => x(d)).attr('y', H - m.b + 18).attr('text-anchor', 'middle').text(M.tick);
+    if (M.log) g.selectAll('line.v').data(xt).join('line').attr('class', 'v')
+      .attr('y1', m.t).attr('y2', H - m.b).attr('x1', (d) => Math.round(x(d)) + 0.5).attr('x2', (d) => Math.round(x(d)) + 0.5);
+    svg.append('text').attr('class', 'axis-title').attr('x', W - m.r).attr('y', H - m.b + 38).attr('text-anchor', 'end').text(W < 480 ? M.axisShort : M.axis);
     svg.append('text').attr('class', 'axis-title').attr('x', m.l).attr('y', m.t - 14).text('↑ Votes against the National Council');
     if (CM.nat != null) {
       svg.append('line').attr('class', 'cm-ref').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(CM.nat)).attr('y2', y(CM.nat));
@@ -1103,7 +1126,7 @@
     const rs = d3.scalePow().exponent(0.25).domain([0, d3.max(rows, (r) => r.pop || 0) || 1]).range([0, rMax]);
     const rad = (r) => (r.pop ? Math.max(1, rs(r.pop)) : 1.5);
     svg.append('g').selectAll('circle').data(rows.slice().sort((a, b) => (b.pop || 0) - (a.pop || 0))).join('circle')
-      .attr('class', 'cm-bubble').attr('cx', (r) => x(r.income_median)).attr('cy', (r) => y(cmShare(r))).attr('r', rad);
+      .attr('class', 'cm-bubble').attr('cx', (r) => x(xv(r))).attr('cy', (r) => y(cmShare(r))).attr('r', rad);
     if (rows.some((r) => r.pop)) {   // size key: a row above the plot, circles side by side
       const keys = [1000, 10000, 100000].filter((k) => k <= rs.domain()[1]);
       const base = keyH - 4;
@@ -1119,16 +1142,16 @@
       });
     }
     // trend: median share in each tenth of communes by income
-    const byIncome = rows.slice().sort((a, b) => a.income_median - b.income_median);
+    const byIncome = rows.slice().sort((a, b) => xv(a) - xv(b));
     const trend = d3.range(10).map((k) => {
       const part = byIncome.slice(Math.floor((k * byIncome.length) / 10), Math.floor(((k + 1) * byIncome.length) / 10));
-      return [d3.median(part, (r) => r.income_median), d3.median(part, cmShare)];
+      return [d3.median(part, xv), d3.median(part, cmShare)];
     });
     svg.append('path').attr('class', 'cm-trend').attr('d', d3.line().x((d) => x(d[0])).y((d) => y(d[1])).curve(d3.curveMonotoneX)(trend));
     // label the largest cities: first free spot right, left, above or below the dot
     const big = rows.slice().sort((a, b) => (b.pop || b.taxpayers || 0) - (a.pop || a.taxpayers || 0)).slice(0, W < 480 ? 3 : 6);
     const lab = svg.append('g').attr('class', 'cm-cities');
-    const pts = big.map((r) => ({ r, cx: x(r.income_median), cy: y(cmShare(r)), rr: rad(r) }));
+    const pts = big.map((r) => ({ r, cx: x(xv(r)), cy: y(cmShare(r)), rr: rad(r) }));
     pts.forEach((p) => lab.append('circle').attr('cx', p.cx).attr('cy', p.cy).attr('r', 2.5));
     const boxes = pts.map((p) => ({ x0: p.cx - 3, x1: p.cx + 3, y0: p.cy - 3, y1: p.cy + 3 }));
     const hits = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
@@ -1146,17 +1169,17 @@
     const ring = svg.append('circle').attr('class', 'focus-ring').attr('r', 8).attr('visibility', 'hidden');
     const hlDot = svg.append('circle').attr('class', 'cm-hl-dot').attr('r', 4.5).attr('visibility', 'hidden');
     const hlLab = svg.append('text').attr('class', 'cm-hl-label').attr('dy', '0.32em').attr('visibility', 'hidden');
-    const delaunay = d3.Delaunay.from(rows, (r) => x(r.income_median), (r) => y(cmShare(r)));
+    const delaunay = d3.Delaunay.from(rows, (r) => x(xv(r)), (r) => y(cmShare(r)));
     CM.inc = {
       mark(id, show) {
         const r = id != null ? CM.byId.get(id) : null;
         lab.selectAll('text').attr('visibility', function () { return r && +this.getAttribute('data-id') === r.id ? 'hidden' : null; });
-        if (!r || !r.income_median || cmShare(r) == null) {
+        if (!r || !(xv(r) > 0) || cmShare(r) == null) {
           [ring, hlDot, hlLab].forEach((e) => e.attr('visibility', 'hidden'));
           tip.hide();
           return;
         }
-        const cx = x(r.income_median), cy = y(cmShare(r)), right = cx < W * 0.66, rr = Math.max(4.5, rad(r));
+        const cx = x(xv(r)), cy = y(cmShare(r)), right = cx < W * 0.66, rr = Math.max(4.5, rad(r));
         ring.attr('cx', cx).attr('cy', cy).attr('r', rr + 3.5).attr('visibility', 'visible');
         hlDot.attr('cx', cx).attr('cy', cy).attr('r', rr).attr('visibility', 'visible');
         hlLab.attr('x', cx + (right ? rr + 8 : -rr - 8)).attr('y', cy).attr('text-anchor', right ? 'start' : 'end')
@@ -1171,16 +1194,38 @@
         const [px, py] = d3.pointer(ev);
         let r = null;
         rows.forEach((c) => {   // the smallest bubble under the pointer is the one drawn on top
-          if (Math.hypot(x(c.income_median) - px, y(cmShare(c)) - py) <= rad(c) + 1.5 && (!r || rad(c) < rad(r))) r = c;
+          if (Math.hypot(x(xv(c)) - px, y(cmShare(c)) - py) <= rad(c) + 1.5 && (!r || rad(c) < rad(r))) r = c;
         });
         if (!r) {
           const c = rows[delaunay.find(px, py)];
-          if (c && Math.hypot(x(c.income_median) - px, y(cmShare(c)) - py) <= 14) r = c;
+          if (c && Math.hypot(x(xv(c)) - px, y(cmShare(c)) - py) <= 14) r = c;
         }
         cmFocus(r ? r.id : CM.pinned, r ? 'income' : 'pinned');
       })
       .on('pointerleave', () => cmFocus(CM.pinned, 'income'));
     if (CM.focus != null) CM.inc.mark(CM.focus, false);
+  }
+
+  function cmIncomeText() {
+    const sum = CM.sum;
+    if (!sum) return;
+    const rc = sum[MEASURES[cmMeasure].corr];
+    const what = cmMeasure === 'tax' ? 'federal tax per resident is higher' : 'incomes are higher';
+    $('#cm-income-lede').textContent = 'Each bubble is a commune, sized by its residents. ' + (rc == null ? ''
+      : rc >= 0.3 ? 'Where ' + what + ', the majority went against the National Council less often.'
+      : rc <= -0.3 ? 'Where ' + what + ', the majority went against the National Council more often.'
+      : 'This and voting against parliament are only loosely related.');
+    const source = cmMeasure === 'tax'
+      ? 'Federal tax per resident: direct federal tax paid by residents taxed all year (individuals only, no company tax) in ' + sum.income_tax_year +
+        ', divided by permanent residents at the end of ' + sum.income_tax_year +
+        (sum.national_federal_tax_per_resident_chf ? '; Switzerland: CHF ' + d3.format(',')(sum.national_federal_tax_per_resident_chf) : '') +
+        '. Like the “Kopfquote” in the press, but without company tax. The tax is steeply progressive, so a few very high incomes weigh heavily: this shows where top earners live rather than the typical household. Residents taxed at source and international civil servants count as residents, but their tax is not included, which lowers Geneva.'
+      : 'Income: median taxable income per tax return in ' + sum.income_tax_year +
+        ', estimated from the Federal Tax Administration’s income classes (communes with very few returns left out). Tax statistics leave out international civil servants and most foreign residents taxed at source, which matters most in Geneva.';
+    $('#cm-income-note').textContent = source +
+      (sum.population_year ? ' Bubbles: permanent residents at the end of ' + sum.population_year + '; size is compressed (area grows with the square root of residents) so small communes stay visible.' : '') +
+      ' Line: the typical commune in each tenth along the horizontal axis.' +
+      (rc == null ? '' : ' Rank correlation ' + d3.format('+.2f')(-rc) + '. A correlation, not a cause: richer communes differ in many other ways too.');
   }
 
   function renderCommunes(rows, sum, topo) {
@@ -1206,17 +1251,28 @@
       why.textContent = 'Switzerland as a whole went against it in ' + f1(CM.nat) + '% of these votes, yet ' +
         d3.format(',')(above) + ' of ' + d3.format(',')(withShare) + ' communes did so more often. Local majorities lean further one way than the national total, and different communes lean different ways.';
       why.hidden = false;
-      const rc = sum.income_alignment_rank_corr;
-      $('#cm-income-lede').textContent = rc == null ? '' : rc >= 0.3
-        ? 'Each bubble is a commune, sized by its residents. Where incomes are higher, the majority went against the National Council less often.'
-        : rc <= -0.3 ? 'Each bubble is a commune, sized by its residents. Where incomes are higher, the majority went against the National Council more often.'
-        : 'Each bubble is a commune, sized by its residents. Income and voting against parliament are only loosely related.';
-      $('#cm-income-note').textContent = 'Income: median taxable income per tax return in ' + sum.income_tax_year +
-        ', estimated from the Federal Tax Administration’s income classes (communes with very few returns left out). Tax statistics leave out international civil servants and most foreign residents taxed at source, which matters most in Geneva.' +
-        (sum.population_year ? ' Bubbles: permanent residents at the end of ' + sum.population_year + '; size is compressed (area grows with the square root of residents) so small communes stay visible.' : '') +
-        ' Line: the typical commune in each tenth by income.' +
-        (rc == null ? '' : ' Rank correlation ' + d3.format('+.2f')(-rc) + '. A correlation, not a cause: richer communes differ in many other ways too.');
+      cmIncomeText();
     }
+
+    const seg = $('#cm-measure');
+    if (rows.some((r) => r.tax_pc != null)) {
+      Object.entries(MEASURES).forEach(([k, M]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.id = 'pvp-cm-measure-' + k;
+        b.textContent = M.button;
+        b.setAttribute('aria-pressed', String(cmMeasure === k));
+        b.addEventListener('click', () => {
+          cmMeasure = k;
+          seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          try { localStorage.setItem('pvp-cm-measure', k); } catch (e) { /* storage unavailable */ }
+          cmIncomeText();
+          if (CM.redrawIncome) CM.redrawIncome();
+        });
+        seg.appendChild(b);
+      });
+      seg.hidden = false;
+    } else cmMeasure = 'median';
 
     // Search: ignores accents, case and punctuation; knows English and German/French names of the
     // cities; lists the options when a name is ambiguous (e.g. Kilchberg ZH and BL).
@@ -1260,7 +1316,7 @@
 
     onWidth($('#cm-legend'), () => drawRaincloud($('#cm-legend')));
     CM.redrawMap = onWidth($('#chart-communes'), () => drawCommuneMap($('#chart-communes')));
-    onWidth($('#chart-income'), () => drawIncome($('#chart-income')));
+    CM.redrawIncome = onWidth($('#chart-income'), () => drawIncome($('#chart-income')));
   }
 
   function loadCommunes() {
