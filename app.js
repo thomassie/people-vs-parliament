@@ -33,7 +33,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-voteday" id="pvp-vote-day" hidden>
     <div class="block__rail">
-      <h2 id="pvp-h-voteday">Vote day</h2>
+      <h2 id="pvp-h-voteday">Vote day<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <div class="vd__status" id="pvp-vd-status"></div>
       <p id="pvp-vd-note"></p>
       <p class="vd__updated" id="pvp-vd-updated"></p>
@@ -48,7 +48,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-decades">
     <div class="block__rail">
-      <h2 id="pvp-h-decades">Decade by decade</h2>
+      <h2 id="pvp-h-decades">Decade by decade<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <p>Share of votes in which the people&rsquo;s majority went against the National Council&rsquo;s majority.</p>
     </div>
     <div class="block__body">
@@ -59,7 +59,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-votes">
     <div class="block__rail">
-      <h2 id="pvp-h-votes">Every vote</h2>
+      <h2 id="pvp-h-votes">Every vote<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <p>Each dot is one federal vote. Across: how strongly the National Council backed it. Up: how strongly the people did. Dots in the shaded corners are votes where the people went the other way.</p>
     </div>
     <div class="block__body">
@@ -84,7 +84,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-splits">
     <div class="block__rail">
-      <h2 id="pvp-h-splits">The widest splits</h2>
+      <h2 id="pvp-h-splits">The widest splits<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <p>Votes where the people went against the National Council by the largest margin, on a scale from 0 to 100% yes. Square: the National Council. Circle: the people.</p>
     </div>
     <div class="block__body">
@@ -94,7 +94,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-communes" id="pvp-communes">
     <div class="block__rail">
-      <h2 id="pvp-h-communes">Commune by commune</h2>
+      <h2 id="pvp-h-communes">Commune by commune<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <p id="pvp-cm-intro">How often each commune&rsquo;s majority went against the National Council&rsquo;s majority in recent federal votes.</p>
       <p id="pvp-cm-why" hidden></p>
     </div>
@@ -117,7 +117,7 @@
 
   <section class="block wrap" aria-labelledby="pvp-h-next">
     <div class="block__rail">
-      <h2 id="pvp-h-next">Next on the ballot</h2>
+      <h2 id="pvp-h-next">Next on the ballot<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
       <p>Parliament has voted; the people have not yet. Each proposal links to the Federal Council&rsquo;s official explanations, a short explainer video and its Swissvotes page.</p>
     </div>
     <div class="block__body">
@@ -758,7 +758,7 @@
     const units = d3.max(rows, (r) => r.units_total);
     const done = d3.min(rows, (r) => r.units_counted);
 
-    $('#h-voteday').textContent = (allFinal ? 'Latest vote day, ' : 'Vote day, ') + fmtDate(d);
+    $('#h-voteday').innerHTML = esc((allFinal ? 'Latest vote day, ' : 'Vote day, ') + fmtDate(d)) + '<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg>';
     $('#vd-status').innerHTML = counting
       ? '<span class="pill pill--live" tabindex="0" data-tip="' + esc(TIP.counting) + '">Counting</span><span class="vd__meta">' +
         done.toLocaleString('en') + ' of ' + units.toLocaleString('en') + ' communes in</span><div class="progress"><span></span></div>'
