@@ -140,6 +140,7 @@
       <li>Residents are the permanent resident population at the end of the year (Federal Statistical Office), Swiss and foreign, including people who cannot vote.</li>
       <li>Voters are the ballots cast in a commune per proposal, averaged over the same votes as the map. A group&rsquo;s share of all voters is its voters divided by the voters of all communes. The Swiss abroad, who vote through their canton (about 1% of ballots), are not included.</li>
     </ul>
+    <p class="credit">Across Europe: <a href="https://thomassie.me/projects/poverty-and-the-vote/">Poverty and the Vote</a> asks whether poorer regions vote less, and more for the far right, in the 2024 European election.</p>
     <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
   </div>
 </section>`;
