@@ -39,8 +39,8 @@
       <p class="vd__updated" id="pvp-vd-updated"></p>
     </div>
     <div class="block__body">
-      <div class="vd__pick"><label for="pvp-vd-canton">Follow a canton</label>
-        <select id="pvp-vd-canton"><option value="">All cantons</option></select></div>
+      <div class="vd__pick pvp-tools"><label class="pvp-pick" for="pvp-vd-canton"><span>Follow a canton</span>
+        <select id="pvp-vd-canton"><option value="">All cantons</option></select></label></div>
       <ol class="vd__list" id="pvp-vd-list" aria-live="polite"></ol>
       <div class="vd__legend" id="pvp-vd-legend"></div>
     </div>
@@ -99,9 +99,9 @@
       <p id="pvp-cm-why" hidden></p>
     </div>
     <div class="block__body">
-      <div class="cm-tools">
-        <label class="cm-find" for="pvp-cm-find">Find a commune</label>
-        <input type="search" id="pvp-cm-find" list="pvp-cm-list" placeholder="e.g. Winterthur" autocomplete="off" spellcheck="false">
+      <div class="cm-tools pvp-tools">
+        <label class="pvp-find" for="pvp-cm-find"><svg class="pvp-mag" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.75"/><line x1="10" y1="10" x2="14.5" y2="14.5"/></svg><span>Find a commune</span>
+          <input type="search" id="pvp-cm-find" list="pvp-cm-list" placeholder="e.g. Winterthur" autocomplete="off" spellcheck="false"></label>
         <datalist id="pvp-cm-list"></datalist>
       </div>
       <div class="cm-legend" id="pvp-cm-legend"></div>

@@ -21,7 +21,7 @@
   --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-support: "Google Sans Code", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --on-yellow: #2D3238;          /* text on the yellow fill, same in both themes */
-  --radius: 14px;
+  --radius: 0;
   --gap: clamp(1.5rem, 4vw, 3rem);
   --step--1: 0.8125rem;
   --step-0: 1.0625rem;
@@ -144,7 +144,7 @@
   background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--rule);
-  border-radius: 10px;
+  border-radius: 0;
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
   font-size: 0.875rem;
   line-height: 1.4;
@@ -170,11 +170,11 @@
 .pvp .tt__dec-lab { fill: var(--muted); }
 .pvp .tt__dec-key { display: flex; flex-wrap: wrap; gap: 0.15rem 0.9rem; margin-top: 0.2rem; }
 .pvp .tt__dec-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
-.pvp .tt__dec-sw { display: inline-block; width: 7px; height: 11px; border-radius: 2px 2px 0 0; background: var(--red); }
+.pvp .tt__dec-sw { display: inline-block; width: 7px; height: 11px; border-radius: 0; background: var(--red); }
 .pvp .tt__dec-tick { display: inline-block; width: 12px; height: 2px; background: var(--ink); }
 /* Shape keys: square = National Council, circle = the people */
 .pvp .key { display: inline-block; width: 10px; height: 10px; flex: none; }
-.pvp .key--square { background: var(--ink); border-radius: 2px; }
+.pvp .key--square { background: var(--ink); border-radius: 0; }
 .pvp .key--circle { border-radius: 50%; background: var(--blue); }
 .pvp .key--circle.against { background: var(--red); }
 /* ---------- Filters & legend ---------- */
@@ -223,8 +223,8 @@
 .pvp .summary strong { color: var(--ink); font-weight: 500; }
 /* ---------- Table view ---------- */
 .pvp .tableview summary { font-family: var(--font-support); font-size: 0.9375rem; cursor: pointer; color: var(--link); width: max-content; max-width: 100%; }
-.pvp .tableview summary:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 4px; }
-.pvp .tablewrap { overflow-x: auto; max-height: 28rem; overflow-y: auto; margin-top: 0.75rem; border: 1px solid var(--rule); border-radius: 10px; }
+.pvp .tableview summary:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 0; }
+.pvp .tablewrap { overflow-x: auto; max-height: 28rem; overflow-y: auto; margin-top: 0.75rem; border: 1px solid var(--rule); border-radius: 0; }
 .pvp table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
 .pvp th, .pvp td { text-align: left; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
 .pvp th { position: sticky; top: 0; background: var(--paper); font-family: var(--font-support); font-size: 0.8125rem; font-weight: 500; white-space: nowrap; }
@@ -256,7 +256,7 @@
 .pvp .pill {
   display: inline-flex; align-items: center; gap: 0.4rem;
   font-family: var(--font-support); font-size: 0.8125rem; line-height: 1;
-  padding: 0.4rem 0.7rem; border-radius: 999px;
+  padding: 0.4rem 0.7rem; border-radius: 0;
   border: 1px solid var(--rule); color: var(--ink); background: var(--paper);
 }
 .pvp .pill--live { background: var(--yellow); color: var(--on-yellow); border-color: var(--yellow); }
@@ -266,8 +266,8 @@
   @keyframes pvp-pulse { 50% { opacity: 0.25; } }
 }
 .pvp .vd__updated { font-family: var(--font-support); font-size: var(--step--1); color: var(--muted); }
-.pvp .progress { flex-basis: 100%; height: 4px; border-radius: 4px; background: var(--rule); overflow: hidden; max-width: 26rem; }
-.pvp .progress span { display: block; height: 100%; background: var(--ink); border-radius: 4px; }
+.pvp .progress { flex-basis: 100%; height: 4px; border-radius: 0; background: var(--rule); overflow: hidden; max-width: 26rem; }
+.pvp .progress span { display: block; height: 100%; background: var(--ink); border-radius: 0; }
 .pvp .vd__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem; }
 .pvp .vd__item { display: grid; gap: 0.45rem; }
 .pvp .vd__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; }
@@ -298,16 +298,13 @@
 .pvp .db-label .v { fill: var(--ink); font-weight: 500; }
 .pvp .tooltip--global { max-width: min(20rem, calc(100vw - 16px)); }
 .pvp [data-tip] { cursor: help; }
-.pvp [data-tip]:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+.pvp [data-tip]:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 0; }
 .pvp .db-c.faded { opacity: 0.22; }
 .pvp .db-c.sel { stroke: var(--ink); stroke-width: 2px; }
 .pvp .db-sel-label { font-family: var(--font-support); font-size: 11.5px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
 .pvp .db-sel-lead { stroke: var(--ink); stroke-width: 1px; }
 .pvp .db-pick { cursor: pointer; }
 .pvp .tt__hint { margin-top: 0.4rem; font-family: var(--font-support); font-size: 0.75rem; color: var(--muted); }
-.pvp .vd__pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); }
-.pvp .vd__pick select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 0.35rem 0.6rem; max-width: 100%; }
-.pvp .vd__pick select:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 .pvp .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 .pvp .sw--with { background: var(--blue); }
 .pvp .sw--against { background: var(--red); }
@@ -320,8 +317,10 @@
 .pvp .p-meta b { color: var(--ink); font-weight: 500; }
 .pvp .p-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; font-family: var(--font-support); font-size: 0.8125rem; }
 .pvp .p-links > span { color: var(--muted); margin-right: 0.25rem; }
-.pvp .p-links a { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--link); text-decoration: none; cursor: pointer; }
-.pvp .p-links a:hover { border-color: var(--link); }
+/* source links as a row on the rule, like the switches: no pills */
+.pvp .p-links a { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 36px; padding: 0 0.7rem; border: 0; border-radius: 0;
+  box-shadow: inset 0 -1px 0 var(--rule); color: var(--link); text-decoration: none; cursor: pointer; }
+.pvp .p-links a:hover { box-shadow: inset 0 -4px 0 var(--link); }
 .pvp .p-links a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 .pvp .ext { font-size: 0.85em; }
 .pvp .up__title { font-weight: 500; }
@@ -339,14 +338,42 @@
 /* ---------- Commune by commune ---------- */
 /* Red = voting against the National Council, as everywhere on the page; darker = more often.
    Bands are opacity steps of --red over the paper, so both themes stay in step. */
-.pvp .cm-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
-.pvp .cm-find { font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); }
-.pvp .cm-tools input {
-  font: inherit; font-family: var(--font-support); font-size: 0.9375rem; color: var(--ink);
-  background: var(--paper); border: 1px solid var(--muted); border-radius: 999px;
-  padding: 0.4rem 0.95rem; width: min(18rem, 100%); min-width: 0; }
-.pvp .cm-tools input::placeholder { color: var(--muted); opacity: 1; }
-.pvp .cm-tools input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+/* Controls on the rule: search fields, pickers and zoom are rows like the switches above them: 44px on a thin
+   rule, mono labels, a thick ink bar under the one in use. No boxes, no pills; the rule is the field's edge. */
+.pvp .pvp-tools { display: flex; flex-wrap: wrap; align-items: stretch; column-gap: 1.5rem;
+  background: repeating-linear-gradient(to bottom, transparent 0 43px, var(--rule) 43px 44px); }
+.pvp .pvp-find, .pvp .pvp-pick { position: relative; display: flex; align-items: center; gap: 0.55rem; height: 44px; min-width: 0;
+  font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); }
+.pvp .pvp-find { flex: 0 1 21rem; cursor: text; }
+.pvp .pvp-pick { cursor: pointer; }
+.pvp .pvp-find:focus-within, .pvp .pvp-pick:focus-within { color: var(--ink); box-shadow: inset 0 -4px 0 var(--ink); }
+.pvp .pvp-find > span, .pvp .pvp-pick > span { white-space: nowrap; }
+.pvp .pvp-mag { width: 15px; height: 15px; flex: none; }
+.pvp .pvp-mag circle, .pvp .pvp-mag line { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.pvp .pvp-find input { -webkit-appearance: none; appearance: none; border: 0; border-radius: 0; background: none; margin: 0; padding: 0;
+  font: inherit; font-family: var(--font-body); font-size: 0.9375rem; color: var(--ink); width: 100%; min-width: 5rem; height: 100%; outline: 0; }
+.pvp .pvp-find input::placeholder { color: var(--muted); opacity: 0.8; }
+.pvp .pvp-find input::-webkit-search-decoration, .pvp .pvp-find input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.pvp .pvp-find input::-webkit-calendar-picker-indicator { display: none !important; }   /* the list's arrow; names still appear as you type */
+.pvp .pvp-pick select { -webkit-appearance: none; appearance: none; border: 0; border-radius: 0; background: none; margin: 0;
+  font: inherit; font-family: var(--font-support); font-size: 0.875rem; font-weight: 500; color: var(--ink);
+  height: 100%; max-width: 100%; padding: 0 1.4rem 0 0; cursor: pointer; outline: 0; }
+.pvp .pvp-pick::after { content: ""; position: absolute; right: 0.2rem; top: 50%; width: 6px; height: 6px; margin-top: -5px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+.pvp .pvp-zoom { display: flex; margin-left: auto; }
+.pvp .pvp-zoom button { font: inherit; font-family: var(--font-support); font-size: 0.875rem; color: var(--muted); background: none;
+  border: 0; border-radius: 0; margin: 0; height: 44px; min-width: 44px; padding: 0 0.875rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pvp .pvp-zoom button:hover { color: var(--ink); box-shadow: inset 0 -4px 0 var(--rule); }
+.pvp .pvp-zoom button:active { color: var(--ink); box-shadow: inset 0 -4px 0 var(--ink); }
+.pvp .pvp-zoom button:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+.pvp .pvp-zsep { width: 1px; background: var(--rule); margin: 12px 0 13px; }
+@container pvp (max-width: 520px) { .pvp .pvp-find { flex: 1 1 100%; } .pvp .pvp-zoom { margin-left: 0; } }
+@media (forced-colors: active) {
+  .pvp .pvp-tools { background: none; }
+  .pvp .pvp-find, .pvp .pvp-pick { border-bottom: 1px solid CanvasText; }
+  .pvp .pvp-find:focus-within, .pvp .pvp-pick:focus-within { border-bottom-width: 4px; box-shadow: none; }
+}
+
 .pvp .cm-c { fill: var(--red); stroke: var(--paper); stroke-width: 0.35px; }
 .pvp .cm-svg--small .cm-c { stroke-width: 0.2px; }
 .pvp .cm-b0 { fill-opacity: 0.1; }
