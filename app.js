@@ -22,7 +22,6 @@
     <h1>People vs Parliament<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h1>
     <p class="lede">Before a federal proposal goes to the people, parliament takes a final vote on it. For <span id="pvp-n-votes">all</span> federal votes since <span id="pvp-first-year">1875</span> we know how the National Council voted. How often did the people decide the other way?</p>
   </div>
-  <div class="mark" aria-hidden="true"><span class="mark__square"></span><span class="mark__circle"></span><span class="mark__half"></span></div>
 </div>
 
 <div class="pvp__main">
@@ -144,8 +143,8 @@
     <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
   </div>
 </section>`;
-  // data-header="false": the host page shows its own title, so drop ours (title, label, mark) but keep the intro question
-  if (root.dataset.header === 'false') root.querySelectorAll('.masthead h1, .masthead .eyebrow, .masthead .mark').forEach((n) => n.remove());
+  // data-header="false": the host page shows its own label, title and description, so drop the whole masthead
+  if (root.dataset.header === 'false') root.querySelector('.masthead').remove();
 
   const FORM = { 1: 'Mandatory referendum', 2: 'Optional referendum', 3: 'Popular initiative' };
   const FORM_ANY = Object.assign({ 4: 'Direct counter-proposal', 5: 'Tie-break question' }, FORM);

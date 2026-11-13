@@ -73,12 +73,6 @@
 .pvp .masthead__text { display: grid; gap: 1.25rem; max-width: 46rem; min-width: 0; }
 .pvp .masthead h1 { font-size: var(--step-3); letter-spacing: -0.02em; }
 .pvp .lede { font-size: var(--step-1); line-height: 1.45; max-width: 38rem; }
-/* Bauhaus mark: people (circle), parliament (square), the vote (half circle). */
-.pvp .mark { position: relative; width: 168px; height: 168px; flex: none; }
-.pvp .mark span { position: absolute; display: block; }
-.pvp .mark__square { left: 0; bottom: 0; width: 104px; height: 104px; background: var(--blue); border-radius: 10px; }
-.pvp .mark__circle { right: 0; top: 0; width: 104px; height: 104px; background: var(--red); border-radius: 50%; }
-.pvp .mark__half { right: 8px; bottom: 0; width: 72px; height: 36px; background: var(--yellow); border-radius: 72px 72px 0 0; }
 /* ---------- Hero figure ---------- */
 .pvp .hero {
   display: grid;
@@ -357,7 +351,7 @@
 .pvp .pvp-find input::-webkit-calendar-picker-indicator { display: none !important; }   /* the list's arrow; names still appear as you type */
 .pvp .pvp-pick select { -webkit-appearance: none; appearance: none; border: 0; border-radius: 0; background: none; margin: 0;
   font: inherit; font-family: var(--font-support); font-size: 0.875rem; font-weight: 500; color: var(--ink);
-  height: 100%; max-width: 100%; padding: 0 1.4rem 0 0; cursor: pointer; outline: 0; }
+  height: 100%; min-width: 0; max-width: 100%; padding: 0 1.4rem 0 0; cursor: pointer; outline: 0; }   /* may shrink: the longest canton is wider than a phone */
 .pvp .pvp-pick::after { content: ""; position: absolute; right: 0.2rem; top: 50%; width: 6px; height: 6px; margin-top: -5px;
   border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
 .pvp .pvp-zoom { display: flex; margin-left: auto; }
@@ -437,10 +431,6 @@
 .pvp #pvp-chart-communes { touch-action: manipulation; }
 @container pvp (max-width: 760px) {
   .pvp .masthead { grid-template-columns: minmax(0, 1fr); }
-  .pvp .mark { width: 96px; height: 96px; order: -1; }
-  .pvp .mark__square { width: 60px; height: 60px; border-radius: 7px; }
-  .pvp .mark__circle { width: 60px; height: 60px; }
-  .pvp .mark__half { width: 42px; height: 21px; right: 4px; }
   .pvp .hero { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .pvp .block, .pvp .foot { grid-template-columns: minmax(0, 1fr); }
   .pvp .seg button { padding: 0 0.6rem; }
