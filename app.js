@@ -1127,7 +1127,7 @@
       .attr('width', W).attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H)
       .attr('class', W < 600 ? 'cm-svg cm-svg--small' : 'cm-svg')
       .attr('role', 'img')
-      .attr('aria-label', 'Map of ' + d3.format(',')(CM.feats.length) + ' communes, shaded by how often their majority went against the National Council since ' + CM.since + '. Darker red means more often. Use the search box above to read one commune.');
+      .attr('aria-label', 'Map of ' + d3.format(',')(CM.feats.length) + ' communes, shaded by how often their majority went against the National Council since ' + CM.since + '. A stronger red means more often. Use the search box above to read one commune.');
     const communes = svg.append('g');
     communes.selectAll('path').data(CM.feats).join('path')
       .attr('d', path)
