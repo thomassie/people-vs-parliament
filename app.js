@@ -140,7 +140,7 @@
       <li>Voters are the ballots cast in a commune per proposal, averaged over the same votes as the map. A group&rsquo;s share of all voters is its voters divided by the voters of all communes. The Swiss abroad, who vote through their canton (about 1% of ballots), are not included.</li>
     </ul>
     <p class="credit">Across Europe: <a href="https://thomassie.me/projects/poverty-and-the-vote/">Poverty and the Vote</a> asks whether poorer regions vote less, and more for the far right, in the 2024 European election.</p>
-    <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), direct federal tax statistics. Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
+    <p class="credit">Data: <a href="https://swissvotes.ch/page/dataset">Swissvotes</a>, Année politique suisse, University of Bern (CC BY 4.0). Commune results: Federal Statistical Office (FSO). Commune boundaries: FSO, generalised boundaries. Income: Federal Tax Administration (ESTV), <a href="https://www.estv.admin.ch/de/statistiken-natuerliche-personen-gemeinden-1983-bis-heute">Direkte Bundessteuer, nat&uuml;rliche Personen, Gemeinden</a> (own estimate from its income classes). Residents: FSO, STATPOP. <span id="pvp-freshness"></span></p>
   </div>
 </section>`;
   // data-header="false": the host page shows its own label, title and description, so drop the whole masthead
