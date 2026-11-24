@@ -126,7 +126,7 @@
 </div>
 
 <section class="foot wrap" aria-label="How this is counted">
-  <h2>How this is counted</h2>
+  <h2>How this is counted<svg class="title-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg></h2>
   <div>
     <ul>
       <li>A vote counts as <em>against parliament</em> when the people&rsquo;s majority (more than 50% yes) is on the other side of the National Council&rsquo;s majority.</li>

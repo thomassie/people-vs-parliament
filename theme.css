@@ -1,4 +1,6 @@
 /* Colour themes for every page of the site (supplied 5 Nov 2026).
+   The canonical copy is site/_shared/theme.css: edit it only there and run `python3 tools/sync_shared.py`, which copies
+   it into each page folder (each folder is published on its own, so it cannot reach this one).
    Use the tokens, never raw hex values, so both themes stay in step.
    Contrast against --paper (WCAG; 4.5 = normal text, 3 = large text and chart marks):
      light: ink 10.0, muted 5.5, link 6.2, blue 5.2, red 4.2, yellow 1.9, rule 1.3

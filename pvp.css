@@ -1,7 +1,10 @@
 /* People vs Parliament: styles, all scoped under .pvp so they cannot touch the host page.
    Colours come from the host's tokens (--paper, --ink, --muted, --rule, --red, --blue, --yellow,
    --link), so the page follows the host's light and dark themes; theme.css defines them for the
-   standalone page. Layout reacts to the width of its own container, not the screen. */
+   standalone page. Layout reacts to the width of its own container, not the screen.
+   One meaning per colour on this page: red = the people's majority against the National Council's (the page's
+   subject), blue = the people with the National Council, ink = the national result where communes are compared with
+   it, yellow = the next vote days (the date discs and the "Counting" label), grey = everything else. */
 .pvp { container: pvp / inline-size; position: relative; color: var(--ink); }
 /* Embedded (default): the host page provides width and side gutters. */
 .pvp:not(.pvp--standalone) .wrap { max-width: none; margin-inline: 0; padding-left: 0; padding-right: 0; }
@@ -13,12 +16,12 @@
 
 /* Layout: soft Bauhaus. An asymmetric two-column grid: a narrow rail carries each section's
    heading and explanation, a wide field carries the chart. One column under 760px.
-   Colours come only from theme.css tokens. Type follows the main website: Helvetica/Arial for
+   Colours come only from theme.css tokens. Type follows the main website: Arial for
    headings, reading text and italic quotations; Google Sans Code for navigation and supporting
    information (labels, axes, notes, figures in tables). */
 .pvp {
-  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: Arial, Helvetica, sans-serif;
+  --font-body: Arial, Helvetica, sans-serif;
   --font-support: "Google Sans Code", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --on-yellow: #2D3238;          /* text on the yellow fill, same in both themes */
   --radius: 0;
@@ -46,7 +49,7 @@
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.pvp h1, .pvp h2, .pvp h3 { font-family: var(--font-display); font-weight: 500; line-height: 1.1; margin: 0; text-wrap: balance; }
+.pvp h1, .pvp h2, .pvp h3 { font-family: var(--font-display); font-weight: 400; line-height: 1.1; margin: 0; text-wrap: balance; }
 .pvp p { margin: 0; }
 .pvp a { text-underline-offset: 0.18em; }
 .pvp em, .pvp q, .pvp blockquote { font-family: var(--font-body); font-style: italic; }
@@ -58,9 +61,10 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-/* Title full stop: a drawn circle (Helvetica's full stop is square). Sits on the baseline. */
+/* Heading stop: a drawn circle, 0.12em wide, 0.07em after the last letter (a typed full stop is square). Sits on the
+   baseline. */
 /* An inline graphic, not an empty box: every engine puts its bottom edge on the text baseline. */
-.pvp .title-dot { display: inline-block; width: 0.15em; height: 0.15em; margin: 0 0 0 0.06em; padding: 0; vertical-align: baseline; overflow: visible; }
+.pvp .title-dot { display: inline-block; width: 0.12em; height: 0.12em; margin: 0 0 0 0.07em; padding: 0; vertical-align: baseline; overflow: visible; }
 .pvp .title-dot circle { fill: var(--red); }
 /* ---------- Masthead ---------- */
 .pvp .masthead {
@@ -73,11 +77,13 @@
 .pvp .masthead__text { display: grid; gap: 1.25rem; max-width: 46rem; min-width: 0; }
 .pvp .masthead h1 { font-size: var(--step-3); letter-spacing: -0.02em; }
 .pvp .lede { font-size: var(--step-1); line-height: 1.45; max-width: 38rem; }
-/* ---------- Hero figure ---------- */
+/* ---------- Hero figure ----------
+   One lead figure on the section grid: the figure in the rail (4 of 12), its sentence in the body, so the sentence
+   starts on the body's left edge like the sections below. */
 .pvp .hero {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0 clamp(1rem, 3vw, 2.5rem);
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--gap);
   align-items: center;
   padding-block: clamp(2.5rem, 6vw, 4.5rem);
   border-bottom: 1px solid var(--rule);
@@ -324,8 +330,8 @@
 .pvp .day__items li { gap: 0.35rem; }
 .pvp .tablewrap a { color: var(--link); }
 /* ---------- Footer ---------- */
-.pvp .foot { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--gap); padding-block: clamp(2.5rem, 6vw, 4rem); }
-.pvp .foot h2 { font-size: var(--step-1); }
+.pvp .foot { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--gap); padding-block: clamp(2.5rem, 6vw, 4.5rem); }
+.pvp .foot h2 { font-size: var(--step-2); }
 .pvp .foot ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.5rem; color: var(--muted); max-width: 44rem; }
 .pvp .foot .credit { font-family: var(--font-support); margin-top: 1.25rem; font-size: var(--step--1); color: var(--muted); }
 .pvp .error { padding: 1rem 1.25rem; border-radius: var(--radius); border: 1px solid var(--red); }
